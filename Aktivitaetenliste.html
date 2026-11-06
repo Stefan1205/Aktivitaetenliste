@@ -4,225 +4,329 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<meta name="version" content="1.0.0">
+<meta name="version" content="1.1.0">
 <title>Aktivitätenliste</title>
 <style>
 :root{
-  --navy:#0b3c7d; --navy2:#082d5e; --zeile:#e9f3fd; --kopfgrau:#e4e4e4;
-  --rand:#000; --rot:#e00000; --hinweis:#1ba1e2; --text:#111;
-  --ui:#f0f0f0; --uirand:#a9a9a9;
+  --blau:#1d3c87; --blau-d:#142b63; --blau-h:#e8edf7;
+  --tinte:#1b2230; --grau:#5d6675; --linie:#c9cfd9; --linie-d:#1b2230;
+  --tisch:#e6e9ef; --papier:#fff;
+  --rot:#d0191f; --offen:#b86e00; --offen-h:#fff3df; --ueber:#c0392b; --ok:#2e7d4f;
 }
 *{box-sizing:border-box}
 html{color-scheme:light}
-body{margin:0;background:#d9dbe0;color:var(--text);
-  font:14px/1.35 "Aptos","Segoe UI",Calibri,Arial,sans-serif}
-button,input,textarea{font:inherit;color:inherit}
+body{margin:0;background:var(--tisch);color:var(--tinte);
+  font:14px/1.45 "Aptos","Segoe UI Variable Text","Segoe UI",Calibri,Arial,sans-serif}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid #5b8def;outline-offset:2px}
+.zahl{font-variant-numeric:tabular-nums}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
 
-/* ---------- Werkzeugleiste ---------- */
-.leiste{position:sticky;top:0;z-index:20;display:flex;gap:6px;align-items:center;flex-wrap:wrap;
-  padding:7px 12px;background:var(--navy);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
-.leiste .titel{font-weight:700;margin-right:10px;letter-spacing:.2px}
-.leiste button{background:#fff;color:var(--navy);border:0;border-radius:3px;padding:5px 11px;cursor:pointer;font-weight:600}
-.leiste button:hover{background:#dce8f7}
-.leiste button.haupt{background:#ffd34d;color:#222}
-.leiste .such{margin-left:auto;padding:4px 8px;border-radius:3px;border:0;width:210px}
-.leiste .status{font-size:12px;opacity:.9;min-width:150px;text-align:right}
-.leiste .status.dirty{color:#ffd34d;font-weight:700}
+/* ---------- Leiste ---------- */
+.leiste{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:8px;padding:8px 16px;
+  background:var(--blau);color:#fff}
+.leiste .marke{font-weight:600;font-size:15px;margin-right:12px;white-space:nowrap}
+.leiste .marke small{font-weight:400;opacity:.7;margin-left:4px}
+.lbtn{border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;border-radius:4px;padding:5px 12px;white-space:nowrap}
+.lbtn:hover{background:rgba(255,255,255,.12)}
+.lbtn.haupt{background:#fff;color:var(--blau);border-color:#fff;font-weight:600}
+.lbtn.haupt:hover{background:var(--blau-h)}
+.leiste .rechts{margin-left:auto;display:flex;align-items:center;gap:12px}
+.status{font-size:12.5px;opacity:.85;white-space:nowrap}
+.status.dirty{opacity:1;color:#ffd27a;font-weight:600}
+.menue{position:relative}
+.menue-liste{position:absolute;top:calc(100% + 6px);left:0;min-width:240px;background:#fff;color:var(--tinte);
+  border:1px solid var(--linie);border-radius:6px;box-shadow:0 10px 30px rgba(20,30,60,.22);padding:6px 0;display:none}
+.menue.auf .menue-liste{display:block}
+.menue-liste button{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:7px 14px}
+.menue-liste button:hover{background:var(--blau-h)}
+.menue-liste hr{border:0;border-top:1px solid #e4e7ed;margin:5px 0}
+.menue-liste kbd{margin-left:auto;font:11px/1 inherit;color:var(--grau)}
 
-.banner{display:none;background:#fff4c2;border-bottom:1px solid #e0c35a;padding:7px 14px;font-size:13px}
+.banner{display:none;background:#fff3cd;border-bottom:1px solid #e3c766;padding:8px 16px;font-size:13px}
 .banner.an{display:flex;gap:10px;align-items:center}
-.banner button{border:1px solid #b39a3a;background:#fff;border-radius:3px;padding:3px 9px;cursor:pointer}
+.banner button{border:1px solid #b89b3a;background:#fff;border-radius:4px;padding:3px 10px}
 
 /* ---------- Blatt ---------- */
-.blatt{width:210mm;min-height:297mm;margin:16px auto 40px;background:#fff;padding:14mm 12mm;
-  box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.blatt{width:210mm;min-height:297mm;margin:20px auto 48px;background:var(--papier);padding:13mm 13mm 16mm;
+  box-shadow:0 1px 2px rgba(20,30,60,.12),0 8px 28px rgba(20,30,60,.10)}
 
-table.kopf{width:168mm;margin:0 auto;border-collapse:collapse;table-layout:fixed}
-table.kopf td{border:1px solid var(--rand);padding:6px 8px;vertical-align:middle}
-table.kopf col.c1{width:42mm} table.kopf col.c3{width:43mm}
-.logo{height:26mm;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer}
-.logo img{max-width:100%;max-height:100%;object-fit:contain}
-.logo .leer{color:#999;font-size:12px;text-align:center;border:1px dashed #bbb;padding:8px 6px;border-radius:3px}
-.logo .weg{position:absolute;top:-4px;right:-4px;display:none;width:18px;height:18px;border-radius:50%;
-  border:0;background:#c33;color:#fff;font-size:12px;line-height:18px;padding:0;cursor:pointer}
-.logo:hover .weg.da{display:block}
-.haupttitel{text-align:center}
-.haupttitel .t1{font-size:24px;letter-spacing:.3px}
-.haupttitel .t2{font-size:20px}
-.blattinfo{font-size:14px}
-.blattinfo div{margin:6px 0}
-.blattinfo input.klein{width:28px;text-align:center}
-.blattinfo input.datum{width:92px}
+/* Schriftfeld wie auf der Zeichnung: kleine Feldnamen, große Werte */
+.sf{display:grid;grid-template-columns:40mm 1fr 46mm;border:1.5px solid var(--linie-d)}
+.sf>div{border-right:1px solid var(--linie-d);border-bottom:1px solid var(--linie-d);padding:5px 9px 7px;min-width:0}
+.sf>div.r{border-right:0}
+.sf>div.u{border-bottom:0}
+.sf .fn{display:block;font-size:10.5px;color:var(--grau);line-height:1.2;margin-bottom:2px}
+.sf .logo{grid-row:span 2;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:6px}
+.sf .logo img{max-width:100%;max-height:30mm;object-fit:contain}
+.sf .logo .leer{color:#98a0ad;font-size:12px;text-align:center;border:1px dashed #c3c9d3;border-radius:4px;padding:10px 8px}
+.sf .logo .weg{position:absolute;top:4px;right:4px;display:none;width:20px;height:20px;border-radius:50%;border:0;
+  background:var(--ueber);color:#fff;font-size:13px;line-height:20px;padding:0}
+.sf .logo:hover .weg{display:block}
+.sf .titel{grid-row:span 2;display:flex;flex-direction:column;justify-content:center;padding-left:14px}
+.sf .titel .abt{font-size:15px;letter-spacing:.02em;color:var(--blau)}
+.sf .titel h1{margin:0;font-size:30px;line-height:1.1;font-weight:600;letter-spacing:-.01em}
+.sf .blattnr{display:flex;align-items:baseline;gap:4px}
+.feld{border:0;background:transparent;padding:0 2px;margin:0 -2px;outline:none;border-radius:2px;width:100%;min-width:0}
+.feld:hover{background:#f2f5fa}
+.feld:focus{background:#fffbe6;box-shadow:inset 0 -1.5px 0 var(--blau)}
+.feld::placeholder{color:#b9c0cb}
+.feld.gross{font-size:16px;font-weight:500}
+.feld.klein{width:26px;text-align:center}
+.feld.ofnr{font-size:24px;font-weight:600;color:var(--rot);letter-spacing:.02em}
+.feld.anfrage{color:var(--rot);font-size:15px;font-weight:500}
+textarea.feld{resize:none;overflow:hidden;display:block;line-height:1.35}
 
-.feld{border:0;background:transparent;padding:1px 2px;outline:none;border-radius:2px}
-.feld:hover{background:#f3f7fc}
-.feld:focus{background:#fffbe0;box-shadow:inset 0 -1px 0 var(--navy)}
-.feld::placeholder{color:#b9b9b9}
-.zeile-feld{display:flex;align-items:baseline;gap:4px}
-.zeile-feld .feld{flex:1;min-width:0}
-.mitte{text-align:center}
-.ofnr{color:var(--rot);font-size:22px;text-align:center;width:100%}
-.anfrage{color:var(--rot);text-align:center;width:100%}
-.label-u{text-decoration:underline}
-textarea.feld{resize:none;width:100%;overflow:hidden;display:block}
+.lage{margin:12px 2px 0;font-size:13px;color:var(--grau)}
+.lage b{color:var(--tinte);font-weight:600}
+.lage .knopf{border:0;background:none;padding:0;color:var(--offen);font-weight:600;text-decoration:underline dotted;text-underline-offset:3px}
+.lage .knopf.ueber{color:var(--ueber)}
 
-.hinweis{text-align:center;color:var(--hinweis);font-size:15px;margin:8px 0 4px;cursor:pointer;user-select:none}
-.hinweis:hover{text-decoration:underline}
+/* Filter */
+.filter{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 6px;padding:8px 10px;background:#f4f6fa;border-radius:6px}
+.filter input[type=search]{flex:1 1 150px;min-width:140px;border:1px solid var(--linie);border-radius:4px;padding:5px 9px;background:#fff}
+.chip{border:1px solid var(--linie);background:#fff;border-radius:999px;padding:3px 10px;font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
+.chip .pk{width:8px;height:8px;border-radius:50%;background:var(--k,#9aa3b1)}
+.chip.an{background:var(--blau);border-color:var(--blau);color:#fff}
+.chip.an .pk{box-shadow:0 0 0 1.5px #fff}
+.filter .trenn{width:1px;height:20px;background:var(--linie);margin:0 2px}
+.leer-hinweis{padding:28px 10px;text-align:center;color:var(--grau);border:1px dashed var(--linie);border-radius:6px;margin-top:10px;cursor:pointer}
+.leer-hinweis b{color:var(--blau)}
 
-table.liste{width:180mm;margin:0 auto;border-collapse:collapse;table-layout:fixed;font-size:13px}
-table.liste col.d{width:24mm} table.liste col.l{width:38mm} table.liste col.b{width:27mm}
-table.liste th{background:var(--kopfgrau);font-weight:400;border:1px solid var(--rand);padding:4px 6px;vertical-align:top}
-table.liste td{border-top:1px solid #000;border-bottom:1px solid #000;padding:3px 6px;vertical-align:top}
-table.liste td:first-child{border-left:1px solid #000}
-table.liste td:last-child{border-right:1px solid #000}
-table.liste tbody tr:nth-child(odd){background:#fff}
-table.liste tbody tr:nth-child(even){background:var(--zeile)}
-table.liste tbody tr.eintrag{cursor:default}
-table.liste tbody tr.eintrag:hover{outline:2px solid #9cc3ee;outline-offset:-2px}
-td.akt{white-space:pre-wrap;word-wrap:break-word}
-td.lnk,td.bea{text-align:center}
-td.lnk a{display:block;color:#2f6596;text-decoration:underline;word-break:break-word}
-td.lnk span.ohne{display:block;color:#555}
-tr.leer td{height:22px;background:var(--zeile);color:#8aa;text-align:center;font-style:italic;cursor:pointer}
-mark{background:#ffe066;padding:0}
+/* Zeitleiste */
+.kopfzeile,.eintrag{display:grid;grid-template-columns:22mm 18px 1fr 25mm 0;column-gap:10px}
+.kopfzeile{font-size:11px;color:var(--grau);border-bottom:1.5px solid var(--linie-d);padding:12px 0 4px;margin-top:4px}
+.kopfzeile .b{text-align:right}
+.monat{display:grid;grid-template-columns:22mm 18px 1fr;column-gap:10px;padding:14px 0 2px}
+.monat span{grid-column:3;font-size:12px;font-weight:600;color:var(--blau);border-bottom:1px solid var(--blau-h);padding-bottom:2px}
+.monat i{grid-column:2;justify-self:center;width:2px;background:var(--linie)}
+.eintrag{position:relative;padding:7px 0 9px;border-bottom:1px solid #edf0f4}
+.eintrag:hover{background:#f8fafd}
+.eintrag .d{font-size:13px;padding-top:1px;color:var(--tinte)}
+.eintrag .spur{position:relative;justify-self:center;width:18px}
+.eintrag .spur::before{content:"";position:absolute;left:8px;top:-8px;bottom:-10px;width:2px;background:var(--linie)}
+.eintrag .spur .p{position:absolute;left:3px;top:4px;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--k,#9aa3b1)}
+.eintrag.ist-offen .spur .p{background:var(--offen-h);border-color:var(--offen)}
+.eintrag .inh{min-width:0}
+.eintrag .zk{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:1px}
+.kat{font-size:11.5px;font-weight:600;color:var(--k,#5d6675)}
+.marke-offen{font-size:11.5px;font-weight:600;color:var(--offen);background:var(--offen-h);border-radius:3px;padding:0 6px}
+.marke-offen.ueber{color:#fff;background:var(--ueber)}
+.marke-ok{font-size:11.5px;color:var(--ok)}
+.eintrag .t{white-space:pre-wrap;word-wrap:break-word}
+.links{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:3px}
+.links a,.links span{font-size:12.5px;color:#245fa8;text-decoration:none;display:inline-flex;gap:4px;align-items:center;max-width:100%}
+.links a:hover{text-decoration:underline}
+.links span{color:var(--grau)}
+.links svg.i{width:13px;height:13px;vertical-align:0;flex:none}
+.eintrag .b{text-align:right;font-size:12.5px;color:var(--grau);padding-top:1px;word-break:break-word}
+.aktion{position:absolute;right:-4px;top:4px;display:flex;gap:2px;opacity:0;background:#f8fafd;padding-left:6px}
+.eintrag:hover .aktion,.eintrag:focus-within .aktion{opacity:1}
+.aktion button{border:0;background:none;width:28px;height:28px;border-radius:4px;color:var(--grau);display:grid;place-items:center}
+.aktion button:hover{background:var(--blau-h);color:var(--blau)}
+.aktion button.lo:hover{background:#fbe5e3;color:var(--ueber)}
+mark{background:#ffe27a;padding:0 1px;border-radius:2px}
+.neu-blink{animation:blink 1.4s ease-out}
+@keyframes blink{from{background:#fff2b8}to{background:transparent}}
+.fuss{margin-top:18px;font-size:11px;color:#9aa3b1;display:flex;justify-content:space-between}
 
 /* ---------- Dialoge ---------- */
-dialog{border:1px solid #888;padding:0;border-radius:2px;box-shadow:0 8px 30px rgba(0,0,0,.35);background:var(--ui)}
-dialog::backdrop{background:rgba(0,0,0,.25)}
-.dkopf{background:var(--navy);color:#fff;font-weight:700;font-size:16px;padding:8px 12px;display:flex;align-items:center;min-height:42px}
-.dkopf span{flex:1;text-align:center}
-.dkopf img{height:40px;background:#fff;padding:2px;margin:-4px 0 -4px 8px}
-.dinhalt{padding:10px 14px 14px}
-.dinhalt label{display:block;font-weight:700;margin:8px 0 2px}
-.dinhalt input,.dinhalt textarea{width:100%;border:1px solid var(--uirand);background:#fff;padding:4px 7px}
-.dinhalt input:focus,.dinhalt textarea:focus{outline:2px solid #6aa0de;outline-offset:-1px}
-.dinhalt textarea{height:62px;resize:vertical}
-.dinhalt .kurz{width:130px}
-.dinhalt hr{border:0;border-top:2px solid #8aa0bb;margin:12px 0 4px}
-.dinhalt .fehler{color:#c00;font-size:12px;min-height:16px;margin-top:6px}
-.knoepfe{display:flex;gap:10px;align-items:center;margin-top:8px}
-.knoepfe .rechts{margin-left:auto;display:flex;gap:10px}
-.btn{border:1px solid #888;background:#e6e6e6;padding:6px 14px;cursor:pointer}
-.btn:hover{background:#dadada}
-.btn.blau{background:var(--navy);color:#fff;border-color:var(--navy2);font-weight:700;min-width:150px}
-.btn.blau:hover{background:var(--navy2)}
-.btn.grau{min-width:120px}
-.btn.loeschen{color:#b00;border-color:#c99}
-.btn.klein{font-size:12px;padding:5px 12px;background:#f7f7f7}
-.linkblock{border-left:3px solid #c4d4e8;padding-left:8px;margin-top:6px}
-.einfuegen{min-height:120px;border:2px dashed #8aa0bb;background:#fff;padding:10px;overflow:auto;max-height:260px;font-size:12px}
-.einfuegen:empty::before{content:"Hier mit Strg+V einfügen …";color:#999}
-.vorschau{font-size:13px;margin-top:8px}
+dialog{border:0;padding:0;border-radius:8px;box-shadow:0 20px 60px rgba(15,25,55,.35);background:#fff;max-width:96vw}
+dialog::backdrop{background:rgba(15,25,55,.35)}
+.dk{display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--blau);color:#fff;border-radius:8px 8px 0 0}
+.dk h2{margin:0;font-size:16px;font-weight:600;flex:1}
+.dk img{height:30px;background:#fff;border-radius:3px;padding:2px}
+.di{padding:14px 18px 6px}
+.reihe{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fe{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+.fe>span{font-size:12px;font-weight:600;color:var(--grau)}
+.fe input,.fe textarea,.fe select{border:1px solid var(--linie);border-radius:4px;padding:6px 9px;background:#fff;width:100%}
+.fe input:focus,.fe textarea:focus,.fe select:focus{outline:2px solid #8fb0ec;outline-offset:-1px;border-color:#8fb0ec}
+.fe textarea{min-height:84px;resize:vertical}
+.mit-knopf{display:flex;gap:6px}
+.mit-knopf button{border:1px solid var(--linie);background:#f4f6fa;border-radius:4px;padding:0 10px;white-space:nowrap}
+.offen-box{border:1px solid #f0d9ae;background:#fffaf0;border-radius:6px;padding:8px 10px;margin-bottom:10px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.offen-box label{display:flex;gap:6px;align-items:center;font-weight:600;color:var(--offen)}
+.offen-box .wv{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--grau)}
+.offen-box .wv input{width:110px;border:1px solid var(--linie);border-radius:4px;padding:4px 7px}
+.offen-box .ok{font-size:12.5px;color:var(--ok)}
+.lz{display:grid;grid-template-columns:1fr 1fr 28px;gap:6px;margin-bottom:6px}
+.lz input{border:1px solid var(--linie);border-radius:4px;padding:5px 8px;min-width:0}
+.lz button{border:0;background:none;color:var(--grau);border-radius:4px}
+.lz button:hover{background:#fbe5e3;color:var(--ueber)}
+.lkopf{display:grid;grid-template-columns:1fr 1fr 28px;gap:6px;font-size:12px;font-weight:600;color:var(--grau);margin:4px 0 3px}
+.btn-plus{border:1px dashed var(--linie);background:none;border-radius:4px;padding:4px 10px;font-size:12.5px;color:var(--blau)}
+.fehler{color:var(--ueber);font-size:12.5px;min-height:18px;margin-top:6px}
+.dfuss{display:flex;gap:10px;align-items:center;padding:10px 18px 16px}
+.dfuss .rechts{margin-left:auto;display:flex;gap:10px}
+.btn{border:1px solid var(--linie);background:#fff;border-radius:4px;padding:7px 16px}
+.btn:hover{background:#f4f6fa}
+.btn.blau{background:var(--blau);border-color:var(--blau);color:#fff;font-weight:600;min-width:130px}
+.btn.blau:hover{background:var(--blau-d)}
+.btn.lo{color:var(--ueber);border-color:#e7b9b4}
+.einfuegen{min-height:120px;border:2px dashed var(--linie);border-radius:6px;background:#fafbfd;padding:10px;overflow:auto;max-height:260px;font-size:12px}
+.einfuegen:empty::before{content:"Hier klicken und Strg+V drücken";color:#9aa3b1}
+.hilfe{font-size:13px;color:var(--grau);margin:0 0 10px}
+
+/* Hinweis unten */
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
+  background:var(--tinte);color:#fff;border-radius:6px;padding:9px 14px;display:flex;gap:14px;align-items:center;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);transition:opacity .18s,transform .18s;z-index:50;font-size:13.5px}
+.toast.an{opacity:1;transform:translateX(-50%);pointer-events:auto}
+.toast button{border:0;background:none;color:#ffd27a;font-weight:600;padding:0}
+.ziehen{position:fixed;inset:0;background:rgba(29,60,135,.12);border:3px dashed var(--blau);display:none;z-index:60;
+  align-items:center;justify-content:center;font-size:18px;color:var(--blau);font-weight:600}
+.ziehen.an{display:flex}
+
+@media (max-width:860px){
+  .blatt{width:auto;margin:0;padding:16px;min-height:0}
+  .leiste{flex-wrap:wrap}
+  .sf{grid-template-columns:1fr 1fr}
+  .sf .logo,.sf .titel{grid-row:auto}
+  .kopfzeile,.eintrag{grid-template-columns:78px 18px 1fr 0 0}
+  .eintrag .b,.kopfzeile .b{display:none}
+}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}.neu-blink{animation:none}}
 
 /* ---------- Druck ---------- */
-@page{size:A4 portrait;margin:12mm}
+@page{size:A4 portrait;margin:12mm 12mm 14mm}
 @media print{
-  body{background:#fff}
-  .leiste,.banner,.hinweis,dialog,.logo .leer,.logo .weg,tr.leer{display:none !important}
+  body{background:#fff;font-size:12.5px}
+  .leiste,.banner,.filter,.aktion,dialog,.toast,.ziehen,.sf .logo .leer,.sf .logo .weg,.leer-hinweis,.lage .knopf-nur{display:none !important}
   .blatt{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}
   .feld{background:transparent !important;box-shadow:none !important}
-  table.liste{margin-top:6mm}
-  table.liste tr{break-inside:avoid}
-  table.liste thead{display:table-header-group}
-  table.liste tbody tr:nth-child(even){-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  table.liste th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  td.lnk a{color:#2f6596}
+  .feld::placeholder{color:transparent}
+  .eintrag{break-inside:avoid}
+  .eintrag:hover{background:none}
+  .monat{break-after:avoid}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
 </head>
 <body>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+  <symbol id="i-stift" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  <symbol id="i-kopie" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
+  <symbol id="i-weg" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></symbol>
+  <symbol id="i-haken" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-pfeil" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m6 13 6 6 6-6"/></symbol>
+  <symbol id="i-mehr" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+</svg>
+
 <div class="leiste">
-  <span class="titel">Aktivitätenliste <small id="ver" style="font-weight:400;opacity:.75"></small></span>
-  <button id="bNeu" class="haupt" title="Neuer Eintrag">+ Neuer Eintrag</button>
-  <button id="bSpeichern" title="Strg+S">Speichern</button>
-  <button id="bSpeichernUnter">Speichern unter …</button>
-  <button id="bImport" title="Tabelle aus der bisherigen Word-Liste übernehmen">Aus Word übernehmen …</button>
-  <button id="bDrucken">Drucken / PDF</button>
-  <button id="bLeer" title="Leere Liste für ein anderes Teil anlegen">Neue leere Liste …</button>
-  <button id="bListe" title="Daten aus einer gespeicherten Aktivitätenliste (z. B. ältere Version) übernehmen">Aus Liste übernehmen …</button>
-  <input id="suche" class="such" type="search" placeholder="Suchen …">
-  <span id="status" class="status"></span>
+  <span class="marke">Aktivitätenliste<small id="ver"></small></span>
+  <button id="bNeu" class="lbtn haupt" title="Neuer Eintrag (N)">+ Neuer Eintrag</button>
+  <button id="bSpeichern" class="lbtn" title="Strg+S">Speichern</button>
+  <div class="menue" id="menue">
+    <button id="bMehr" class="lbtn" aria-haspopup="true" aria-expanded="false">Weitere <svg class="i"><use href="#i-mehr"/></svg></button>
+    <div class="menue-liste" role="menu">
+      <button data-m="unter">Speichern unter …</button>
+      <button data-m="leer">Neue leere Liste …</button>
+      <hr>
+      <button data-m="word">Aus Word übernehmen …</button>
+      <button data-m="liste">Aus Liste übernehmen …</button>
+      <hr>
+      <button data-m="text">Einträge als Text kopieren</button>
+      <button data-m="csv">Als CSV für Excel speichern</button>
+      <button data-m="druck">Drucken / PDF <kbd>Strg+P</kbd></button>
+    </div>
+  </div>
+  <div class="rechts"><span id="status" class="status"></span></div>
 </div>
 <div id="banner" class="banner"></div>
 
-<div class="blatt">
-  <table class="kopf">
-    <colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
-    <tr>
-      <td><div class="logo" id="logo" title="Klicken, um ein Logo zu laden"></div></td>
-      <td class="haupttitel"><div class="t1">KONSTRUKTION</div><div class="t2">Aktivitätenliste</div></td>
-      <td class="blattinfo">
-        <div>Blatt <input class="feld klein" data-k="blatt"> von <input class="feld klein" data-k="von"></div>
-        <div>Datum: <input class="feld datum" data-k="datum" placeholder="TT.MM.JJJJ"></div>
-      </td>
-    </tr>
-    <tr>
-      <td class="mitte"><div class="zeile-feld">Kunde: <input class="feld" data-k="kunde" placeholder="Kunde"></div></td>
-      <td><div class="zeile-feld">Teilename: <input class="feld" data-k="teilename" placeholder="Teilename"></div></td>
-      <td class="mitte">OTTO FUCHS-Nr:<br><input class="feld ofnr" data-k="ofnr" placeholder="000000"></td>
-    </tr>
-    <tr>
-      <td></td>
-      <td><span class="label-u">Bemerkung:</span><textarea class="feld" rows="1" data-k="bemerkung" placeholder="–"></textarea></td>
-      <td class="mitte">war Anfragenummer:<br><input class="feld anfrage" data-k="anfrage" placeholder="A0000.JJJJ"></td>
-    </tr>
-  </table>
+<main class="blatt">
+  <section class="sf" aria-label="Kopfdaten">
+    <div class="logo" id="logo" title="Klicken, um ein Logo zu laden"></div>
+    <div class="titel"><span class="abt">Konstruktion</span><h1>Aktivitätenliste</h1></div>
+    <div class="r">
+      <span class="fn">Blatt</span>
+      <div class="blattnr zahl"><input class="feld klein" data-k="blatt" aria-label="Blatt"> von <input class="feld klein" data-k="von" aria-label="von"></div>
+    </div>
+    <div class="r"><span class="fn">Datum</span><input class="feld zahl" data-k="datum" placeholder="TT.MM.JJJJ" aria-label="Datum"></div>
+    <div><span class="fn">Kunde</span><input class="feld gross" data-k="kunde" placeholder="Kunde" aria-label="Kunde"></div>
+    <div><span class="fn">Teilename</span><input class="feld gross" data-k="teilename" placeholder="Teilename" aria-label="Teilename"></div>
+    <div class="r"><span class="fn">OTTO FUCHS-Nr.</span><input class="feld ofnr zahl" data-k="ofnr" placeholder="000000" aria-label="OTTO FUCHS-Nr."></div>
+    <div class="u" style="grid-column:span 2"><span class="fn">Bemerkung</span><textarea class="feld" rows="1" data-k="bemerkung" placeholder="–" aria-label="Bemerkung"></textarea></div>
+    <div class="r u"><span class="fn">war Anfragenummer</span><input class="feld anfrage zahl" data-k="anfrage" placeholder="A0000.JJJJ" aria-label="war Anfragenummer"></div>
+  </section>
 
-  <div class="hinweis" id="hinweis" title="Doppelklick: neuer Eintrag">"➕ Neuer Eintrag mit Doppelklick"</div>
+  <p class="lage" id="lage"></p>
 
-  <table class="liste" id="liste">
-    <colgroup><col class="d"><col class="a"><col class="l"><col class="b"></colgroup>
-    <thead><tr><th>Datum</th><th>Aktivität</th><th>SAP Link<br>Zusatzdokumente</th><th>Bearbeiter</th></tr></thead>
-    <tbody id="zeilen"></tbody>
-  </table>
-</div>
+  <div class="filter" role="search">
+    <input id="suche" type="search" placeholder="Suchen in Text, Links, Bearbeiter …  ( / )">
+    <span id="katChips"></span>
+    <span class="trenn"></span>
+    <button class="chip" id="fOffen" aria-pressed="false">Nur offene</button>
+    <button class="chip" id="fSort" title="Reihenfolge umkehren"><svg class="i" id="sortPfeil"><use href="#i-pfeil"/></svg><span id="sortText"></span></button>
+  </div>
 
-<!-- Eintrag erfassen -->
-<dialog id="dEintrag">
-  <form method="dialog" id="fEintrag" style="width:600px">
-    <div class="dkopf"><span id="dTitel">Aktivitätenliste – Eintrag erfassen</span><img id="dLogo" alt="" hidden></div>
-    <div class="dinhalt">
-      <label for="eDatum">Datum (TT.MM.JJJJ) *</label>
-      <input id="eDatum" class="kurz" autocomplete="off">
-      <label for="eText">Aktivität *</label>
-      <textarea id="eText"></textarea>
-      <label for="eBearb">Bearbeiter</label>
-      <input id="eBearb" class="kurz" autocomplete="off">
-      <hr>
+  <div class="kopfzeile"><span>Datum</span><span></span><span>Aktivität und Unterlagen</span><span class="b">Bearbeiter</span></div>
+  <div id="zeilen"></div>
+  <div class="fuss"><span id="fussL"></span><span id="fussR"></span></div>
+</main>
+
+<!-- Eintrag -->
+<dialog id="dEintrag" aria-labelledby="dTitel">
+  <form method="dialog" id="fEintrag" style="width:640px">
+    <div class="dk"><h2 id="dTitel">Neuer Eintrag</h2><img id="dLogo" alt="" hidden></div>
+    <div class="di">
+      <div class="reihe">
+        <label class="fe"><span>Datum *</span>
+          <span class="mit-knopf"><input id="eDatum" class="zahl" autocomplete="off" placeholder="TT.MM.JJJJ"><button type="button" id="eHeute">Heute</button></span></label>
+        <label class="fe"><span>Art</span><select id="eKat"></select></label>
+      </div>
+      <label class="fe"><span>Aktivität *</span><textarea id="eText" placeholder="Was wurde gemacht, entschieden oder vereinbart?"></textarea></label>
+      <div class="reihe">
+        <label class="fe"><span>Bearbeiter</span><input id="eBearb" list="lBearb" autocomplete="off"></label>
+        <div></div>
+      </div>
+      <div class="offen-box">
+        <label><input type="checkbox" id="eOffen"> Offener Punkt</label>
+        <span class="wv" id="eWvBox">Wiedervorlage am <input id="eWv" class="zahl" placeholder="TT.MM.JJJJ" autocomplete="off"></span>
+        <span class="ok" id="eOkInfo"></span>
+      </div>
+      <div class="lkopf"><span>SAP-Link / Pfad</span><span>Anzeigetext</span><span></span></div>
       <div id="eLinks"></div>
-      <div class="fehler" id="eFehler"></div>
-      <div class="knoepfe">
-        <button type="button" class="btn klein" id="eLinkPlus">+ Weiterer SAP Link</button>
-        <button type="button" class="btn loeschen" id="eLoeschen" hidden>Löschen</button>
-        <div class="rechts">
-          <button type="submit" class="btn blau" id="eOk">Eintragen</button>
-          <button type="button" class="btn grau" id="eAbbr">Abbrechen</button>
-        </div>
+      <button type="button" class="btn-plus" id="eLinkPlus">+ Weiterer Link</button>
+      <div class="fehler" id="eFehler" role="alert"></div>
+    </div>
+    <div class="dfuss">
+      <button type="button" class="btn lo" id="eLoeschen" hidden>Löschen</button>
+      <span id="eMeta" style="font-size:11.5px;color:#9aa3b1"></span>
+      <div class="rechts">
+        <button type="button" class="btn" id="eAbbr">Abbrechen</button>
+        <button type="submit" class="btn blau" id="eOk">Eintragen</button>
       </div>
     </div>
   </form>
 </dialog>
+<datalist id="lBearb"></datalist>
 
 <!-- Aus Word übernehmen -->
-<dialog id="dImport">
-  <div style="width:640px">
-    <div class="dkopf"><span>Einträge aus der Word-Liste übernehmen</span></div>
-    <div class="dinhalt">
-      <p style="margin:4px 0 8px">Im Word-Dokument <b>Strg+A</b>, <b>Strg+C</b> – dann hier hineinklicken und <b>Strg+V</b>.
-      Kopfdaten werden nur in leere Felder übernommen, doppelte Einträge übersprungen.</p>
+<dialog id="dImport" aria-labelledby="iTitel">
+  <div style="width:620px">
+    <div class="dk"><h2 id="iTitel">Aus Word übernehmen</h2></div>
+    <div class="di">
+      <p class="hilfe">Im Word-Dokument <b>Strg+A</b> und <b>Strg+C</b> drücken, dann hier hineinklicken und <b>Strg+V</b>.
+      Kopfdaten kommen nur in leere Felder, doppelte Einträge werden übersprungen.</p>
       <div id="iFeld" class="einfuegen" contenteditable="true"></div>
-      <div id="iVorschau" class="vorschau"></div>
-      <div class="knoepfe"><div class="rechts">
-        <button type="button" class="btn blau" id="iOk" disabled>Übernehmen</button>
-        <button type="button" class="btn grau" id="iAbbr">Abbrechen</button>
-      </div></div>
+      <p id="iVorschau" class="hilfe" style="margin-top:8px"></p>
     </div>
+    <div class="dfuss"><div class="rechts">
+      <button type="button" class="btn" id="iAbbr">Abbrechen</button>
+      <button type="button" class="btn blau" id="iOk" disabled>Übernehmen</button>
+    </div></div>
   </div>
 </dialog>
 
 <input type="file" id="logoDatei" accept="image/*" hidden>
 <input type="file" id="listeDatei" accept=".html,.htm" hidden>
+<div class="toast" id="toast" role="status"><span id="toastText"></span><button id="toastKnopf" hidden></button></div>
+<div class="ziehen" id="ziehen">Logo (Bild) oder gespeicherte Liste (.html) hier ablegen</div>
 
 <script id="daten" type="application/json">{}</script>
 <script>
@@ -230,13 +334,22 @@ dialog::backdrop{background:rgba(0,0,0,.25)}
 'use strict';
 /* Vorlage für das Speichern: unveränderter Seitenaufbau, bevor irgendetwas gerendert wird */
 const VORLAGE = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-const LS_BEARB = 'aktliste.bearbeiter', LS_LOGO = 'aktliste.logo';
+const VERSION = (document.querySelector('meta[name="version"]') || {}).content || '';
+const LS_BEARB = 'aktliste.bearbeiter', LS_LOGO = 'aktliste.logo', LS_SORT = 'aktliste.sort';
 const LS_ENTWURF = 'aktliste.entwurf:' + location.pathname;
+const BS = String.fromCharCode(92), LT = String.fromCharCode(60);
+const KATEGORIEN = [
+  ['Konstruktion', '#1d3c87'], ['Änderung', '#7b4fb0'], ['Kunde', '#0f7c8c'],
+  ['Abstimmung', '#a0701a'], ['Freigabe', '#2e7d4f'], ['Info', '#6b7480']
+];
+const KFARBE = Object.fromEntries(KATEGORIEN);
+const MONATE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 
 const $ = s => document.querySelector(s);
 const pad = n => String(n).padStart(2,'0');
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function ls(k, v){ try{ if(v === undefined) return localStorage.getItem(k); if(v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){ return null; } }
+const ico = (n, cls) => '<svg class="i' + (cls ? ' ' + cls : '') + '"><use href="#i-' + n + '"/></svg>';
 
 function heute(){ const d = new Date(); return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear(); }
 function datumNorm(s){
@@ -246,17 +359,20 @@ function datumNorm(s){
   if((r = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))){ j=+r[1]; m=+r[2]; t=+r[3]; }
   else if((r = s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2}|\d{4})$/))){ t=+r[1]; m=+r[2]; j=+r[3]; if(j<100) j+=2000; }
   else if((r = s.match(/^(\d{1,2})\.(\d{1,2})\.?$/))){ t=+r[1]; m=+r[2]; j=new Date().getFullYear(); }
+  else if((r = s.match(/^\+(\d{1,3})$/))){ const d = new Date(); d.setDate(d.getDate() + +r[1]); return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear(); }
   else return null;
   const d = new Date(j, m-1, t);
   if(d.getFullYear()!==j || d.getMonth()!==m-1 || d.getDate()!==t) return null;
   return pad(t)+'.'+pad(m)+'.'+j;
 }
-const sortKey = s => { const p = String(s).split('.'); return p.length===3 ? p[2]+p[1]+p[0] : '0'; };
+const sortKey = s => { const p = String(s||'').split('.'); return p.length===3 ? p[2]+p[1]+p[0] : '00000000'; };
+const jetztIso = () => new Date().toISOString();
+const isoText = s => { try{ return new Date(s).toLocaleString('de-DE', {dateStyle:'short', timeStyle:'short'}); }catch(e){ return ''; } };
 
 function linkZiel(u){
   u = String(u||'').trim(); if(!u) return '';
-  if(/^\\\\/.test(u)) return 'file:' + u.replace(/\\/g,'/');
-  if(/^[a-zA-Z]:[\\\/]/.test(u)) return 'file:///' + u.replace(/\\/g,'/');
+  if(u.startsWith(BS + BS)) return 'file:' + u.split(BS).join('/');
+  if(/^[a-zA-Z]:[\\\/]/.test(u)) return 'file:///' + u.split(BS).join('/');
   if(/^[a-z][a-z0-9+.\-]*:/i.test(u)) return u;
   if(/^www\./i.test(u) || /^[\w-]+(\.[\w-]+)+(\/|$)/.test(u)) return 'https://' + u;
   return u;
@@ -270,7 +386,12 @@ function normalisieren(d){
   d.version = 1;
   d.kopf = Object.assign({kunde:'', teilename:'', ofnr:'', bemerkung:'', anfrage:'', datum:'', blatt:'1', von:'1'}, d.kopf||{});
   d.eintraege = Array.isArray(d.eintraege) ? d.eintraege : [];
-  d.eintraege.forEach((e,i) => { e.id = e.id || ('e'+Date.now().toString(36)+i); e.links = Array.isArray(e.links) ? e.links : []; });
+  d.eintraege.forEach((e,i) => {
+    e.id = e.id || ('e'+Date.now().toString(36)+i);
+    e.links = Array.isArray(e.links) ? e.links : [];
+    e.kat = e.kat || ''; e.offen = !!e.offen; e.wv = e.wv || ''; e.erledigt_am = e.erledigt_am || '';
+    e.text = e.text || ''; e.bearbeiter = e.bearbeiter || ''; e.datum = e.datum || '';
+  });
   if(typeof d.logo !== 'string') d.logo = '';
   return d;
 }
@@ -287,19 +408,28 @@ function geaendert(){
   clearTimeout(entwurfTimer);
   entwurfTimer = setTimeout(() => ls(LS_ENTWURF, JSON.stringify({stand: Date.now(), daten: D})), 400);
 }
-function sauber(name){
-  dirty = false; ls(LS_ENTWURF, null);
-  status(name ? 'Gespeichert: ' + name : 'Gespeichert');
-}
+function sauber(name){ dirty = false; ls(LS_ENTWURF, null); status(name ? 'Gespeichert: ' + name : 'Gespeichert'); }
 function status(t){
   const s = $('#status');
-  if(dirty){ s.textContent = '● Nicht gespeichert'; s.className = 'status dirty'; }
-  else { s.textContent = t || (D.gespeichert ? 'Stand ' + new Date(D.gespeichert).toLocaleString('de-DE') : ''); s.className = 'status'; }
+  if(dirty){ s.textContent = 'Nicht gespeichert'; s.className = 'status dirty'; }
+  else { s.textContent = t || (D.gespeichert ? 'Gespeichert ' + isoText(D.gespeichert) : ''); s.className = 'status'; }
+}
+
+/* ---------- Hinweis unten ---------- */
+let toastTimer = null;
+function toast(text, knopf, aktion){
+  $('#toastText').textContent = text;
+  const b = $('#toastKnopf');
+  if(knopf){ b.textContent = knopf; b.hidden = false; b.onclick = () => { aktion(); verstecken(); }; } else b.hidden = true;
+  $('#toast').classList.add('an');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(verstecken, knopf ? 8000 : 3200);
+  function verstecken(){ $('#toast').classList.remove('an'); }
 }
 
 /* ---------- Kopf ---------- */
+function kopfZeigen(){ document.querySelectorAll('[data-k]').forEach(el => { el.value = D.kopf[el.dataset.k] || ''; if(el.tagName==='TEXTAREA') hoehe(el); }); }
 document.querySelectorAll('[data-k]').forEach(el => {
-  el.value = D.kopf[el.dataset.k] || '';
   el.addEventListener('input', () => {
     D.kopf[el.dataset.k] = el.value; if(el.tagName==='TEXTAREA') hoehe(el);
     if(el.dataset.k==='ofnr' || el.dataset.k==='teilename') titel();
@@ -314,25 +444,43 @@ function titel(){ const k = D.kopf; document.title = 'Aktivitätenliste' + (k.of
 function logoZeigen(){
   const l = $('#logo');
   l.innerHTML = D.logo
-    ? '<img alt="Logo" src="'+esc(D.logo)+'"><button class="weg da" title="Logo entfernen">×</button>'
-    : '<div class="leer">Logo laden<br>(Klick)</div>';
+    ? '<img alt="Logo" src="'+esc(D.logo)+'"><button class="weg" title="Logo entfernen" aria-label="Logo entfernen">×</button>'
+    : '<div class="leer">Logo laden<br>(Klick oder Bild hierher ziehen)</div>';
   const dl = $('#dLogo'); if(D.logo){ dl.src = D.logo; dl.hidden = false; } else dl.hidden = true;
+}
+function logoLaden(f){
+  const r = new FileReader();
+  r.onload = () => { D.logo = r.result; ls(LS_LOGO, D.logo); logoZeigen(); geaendert(); };
+  r.readAsDataURL(f);
 }
 $('#logo').addEventListener('click', ev => {
   if(ev.target.classList.contains('weg')){ D.logo = ''; logoZeigen(); geaendert(); return; }
   $('#logoDatei').click();
 });
-$('#logoDatei').addEventListener('change', ev => {
-  const f = ev.target.files[0]; if(!f) return;
-  const r = new FileReader();
-  r.onload = () => { D.logo = r.result; ls(LS_LOGO, D.logo); logoZeigen(); geaendert(); };
-  r.readAsDataURL(f); ev.target.value = '';
+$('#logoDatei').addEventListener('change', ev => { const f = ev.target.files[0]; ev.target.value = ''; if(f) logoLaden(f); });
+
+/* ---------- Filter ---------- */
+const F = {q:'', kats:new Set(), offen:false, ab: ls(LS_SORT) === 'ab'};
+function chipsZeigen(){
+  const vorhanden = new Set(D.eintraege.map(e => e.kat).filter(Boolean));
+  $('#katChips').innerHTML = KATEGORIEN.filter(([k]) => vorhanden.has(k)).map(([k,f]) =>
+    '<button class="chip' + (F.kats.has(k) ? ' an' : '') + '" data-kat="'+esc(k)+'" style="--k:'+f+'" aria-pressed="'+F.kats.has(k)+'"><span class="pk"></span>'+esc(k)+'</button>').join(' ');
+  $('#fOffen').classList.toggle('an', F.offen); $('#fOffen').setAttribute('aria-pressed', F.offen);
+  $('#sortText').textContent = F.ab ? 'Neueste oben' : 'Älteste oben';
+  $('#sortPfeil').style.transform = F.ab ? 'rotate(180deg)' : '';
+}
+$('#katChips').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-kat]'); if(!b) return;
+  const k = b.dataset.kat; F.kats.has(k) ? F.kats.delete(k) : F.kats.add(k); rendern();
 });
+$('#fOffen').addEventListener('click', () => { F.offen = !F.offen; rendern(); });
+$('#fSort').addEventListener('click', () => { F.ab = !F.ab; ls(LS_SORT, F.ab ? 'ab' : 'auf'); rendern(); });
+$('#suche').addEventListener('input', () => { F.q = $('#suche').value.trim(); rendern(); });
 
 /* ---------- Liste ---------- */
 function markiere(text, q){
   const t = esc(text); if(!q) return t;
-  const re = new RegExp('(' + esc(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+  const re = new RegExp('(' + esc(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
   return t.replace(re, '<mark>$1</mark>');
 }
 function sortieren(){
@@ -340,97 +488,193 @@ function sortieren(){
   D.eintraege.sort((a,b) => sortKey(a.datum).localeCompare(sortKey(b.datum)) || a._i - b._i);
   D.eintraege.forEach(e => delete e._i);
 }
-function rendern(){
-  const q = $('#suche').value.trim().toLowerCase();
-  const tb = $('#zeilen'); let html = '', n = 0;
-  for(const e of D.eintraege){
+function ueberfaellig(e){ return e.offen && e.wv && sortKey(e.wv) < sortKey(heute()); }
+function sichtbar(){
+  const q = F.q.toLowerCase();
+  let l = D.eintraege.filter(e => {
+    if(F.offen && !e.offen) return false;
+    if(F.kats.size && !F.kats.has(e.kat)) return false;
     if(q){
-      const hay = [e.datum, e.text, e.bearbeiter, ...e.links.map(l => l.text + ' ' + l.url)].join(' ').toLowerCase();
-      if(!hay.includes(q)) continue;
+      const hay = [e.datum, e.kat, e.text, e.bearbeiter, e.wv, ...e.links.map(l => l.text + ' ' + l.url)].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
     }
-    n++;
-    const links = e.links.map(l => {
-      const z = linkZiel(l.url), txt = l.text || l.url;
-      if(!z) return '<span class="ohne">'+markiere(txt,q)+'</span>';
-      const neu = /^https?:/i.test(z) ? ' target="_blank" rel="noopener"' : '';
-      return '<a href="'+esc(z)+'"'+neu+' title="'+esc(l.url)+'">'+markiere(txt,q)+'</a>';
-    }).join('');
-    html += '<tr class="eintrag" data-id="'+esc(e.id)+'" title="Doppelklick: bearbeiten">'
-      + '<td>'+markiere(e.datum,q)+'</td><td class="akt">'+markiere(e.text,q)+'</td>'
-      + '<td class="lnk">'+links+'</td><td class="bea">'+markiere(e.bearbeiter,q)+'</td></tr>';
-  }
-  if(!n) html = '<tr class="leer"><td colspan="4">' + (q ? 'Kein Eintrag gefunden' : 'Noch keine Einträge – Doppelklick zum Anlegen') + '</td></tr>';
-  tb.innerHTML = html;
+    return true;
+  });
+  if(F.ab) l = l.slice().reverse();
+  return l;
 }
-$('#suche').addEventListener('input', rendern);
+function lageZeigen(){
+  const n = D.eintraege.length, offen = D.eintraege.filter(e => e.offen), ueber = offen.filter(ueberfaellig);
+  if(!n){ $('#lage').innerHTML = ''; return; }
+  const letzte = D.eintraege[D.eintraege.length - 1];
+  let t = '<b class="zahl">' + n + '</b> ' + (n === 1 ? 'Eintrag' : 'Einträge');
+  if(offen.length){
+    t += ', davon <button class="knopf" id="lOffen">' + offen.length + ' offen</button>';
+    if(ueber.length) t += ' (<button class="knopf ueber" id="lUeber">' + ueber.length + ' überfällig</button>)';
+  } else t += ', keine offenen Punkte';
+  t += '. Letzte Aktivität am <b class="zahl">' + esc(letzte.datum) + '</b>.';
+  $('#lage').innerHTML = t;
+  const o = $('#lOffen'); if(o) o.onclick = () => { F.offen = true; rendern(); };
+  const u = $('#lUeber'); if(u) u.onclick = () => { F.offen = true; rendern(); };
+}
+function zeileHtml(e, q){
+  const farbe = KFARBE[e.kat] || '#9aa3b1';
+  let zk = '';
+  if(e.kat) zk += '<span class="kat" style="--k:'+farbe+'">'+markiere(e.kat,q)+'</span>';
+  if(e.offen){
+    const ue = ueberfaellig(e);
+    zk += '<span class="marke-offen' + (ue ? ' ueber' : '') + '">' + (e.wv ? (ue ? 'überfällig seit ' : 'offen bis ') + esc(e.wv) : 'offen') + '</span>';
+  } else if(e.erledigt_am) zk += '<span class="marke-ok">' + ico('haken') + ' erledigt am ' + esc(e.erledigt_am) + '</span>';
+  const links = e.links.map(l => {
+    const z = linkZiel(l.url), txt = l.text || l.url;
+    if(!z) return '<span>' + ico('link') + markiere(txt,q) + '</span>';
+    const neu = /^https?:/i.test(z) ? ' target="_blank" rel="noopener"' : '';
+    return '<a href="'+esc(z)+'"'+neu+' title="'+esc(l.url)+'">' + ico('link') + markiere(txt,q) + '</a>';
+  }).join('');
+  let meta = '';
+  if(e.erstellt) meta += 'Angelegt ' + isoText(e.erstellt.am) + (e.erstellt.von ? ' von ' + e.erstellt.von : '');
+  if(e.geaendert) meta += (meta ? ' · ' : '') + 'geändert ' + isoText(e.geaendert.am) + (e.geaendert.von ? ' von ' + e.geaendert.von : '');
+  return '<div class="eintrag' + (e.offen ? ' ist-offen' : '') + '" data-id="'+esc(e.id)+'" style="--k:'+farbe+'"' + (meta ? ' title="'+esc(meta)+'"' : '') + '>'
+    + '<div class="d zahl">'+markiere(e.datum,q)+'</div>'
+    + '<div class="spur"><span class="p"></span></div>'
+    + '<div class="inh">' + (zk ? '<div class="zk">'+zk+'</div>' : '') + '<div class="t">'+markiere(e.text,q)+'</div>'
+    + (links ? '<div class="links">'+links+'</div>' : '') + '</div>'
+    + '<div class="b">'+markiere(e.bearbeiter,q)+'</div>'
+    + '<div class="aktion">'
+    + (e.offen ? '<button data-a="erledigt" title="Als erledigt markieren" aria-label="Erledigt">'+ico('haken')+'</button>' : '')
+    + '<button data-a="bearbeiten" title="Bearbeiten (Doppelklick)" aria-label="Bearbeiten">'+ico('stift')+'</button>'
+    + '<button data-a="kopieren" title="Als neuen Eintrag kopieren" aria-label="Kopieren">'+ico('kopie')+'</button>'
+    + '<button data-a="loeschen" class="lo" title="Löschen" aria-label="Löschen">'+ico('weg')+'</button>'
+    + '</div></div>';
+}
+function rendern(markId){
+  chipsZeigen(); lageZeigen();
+  const q = F.q, liste = sichtbar();
+  let html = '', monat = '';
+  for(const e of liste){
+    const p = String(e.datum).split('.');
+    const m = p.length === 3 ? p[2] + p[1] : '';
+    if(m !== monat){ monat = m; html += '<div class="monat"><i></i><span>' + (m ? MONATE[+p[1]-1] + ' ' + p[2] : 'Ohne Datum') + '</span></div>'; }
+    html += zeileHtml(e, q);
+  }
+  if(!liste.length){
+    html = D.eintraege.length
+      ? '<div class="leer-hinweis">Kein Eintrag passt zum Filter. <b id="fZurueck">Filter zurücksetzen</b></div>'
+      : '<div class="leer-hinweis" id="ersterEintrag">Noch keine Einträge. <b>Ersten Eintrag anlegen</b> – oder über „Weitere“ die bisherige Word-Liste übernehmen.</div>';
+  }
+  $('#zeilen').innerHTML = html;
+  const z = $('#fZurueck'); if(z) z.onclick = () => { F.q=''; $('#suche').value=''; F.kats.clear(); F.offen=false; rendern(); };
+  const er = $('#ersterEintrag'); if(er) er.onclick = () => oeffnen(null);
+  if(markId){ const el = document.querySelector('.eintrag[data-id="'+markId+'"]'); if(el){ el.classList.add('neu-blink'); el.scrollIntoView({block:'nearest'}); } }
+  $('#fussL').textContent = (D.kopf.ofnr ? D.kopf.ofnr + ' ' : '') + (D.kopf.teilename || '');
+  $('#fussR').textContent = 'Stand ' + heute() + ' · Aktivitätenliste ' + VERSION;
+  bearbeiterListe();
+}
+function finde(id){ return D.eintraege.find(e => e.id === id); }
 $('#zeilen').addEventListener('dblclick', ev => {
-  if(ev.target.closest('a')) return;
-  const tr = ev.target.closest('tr');
-  if(tr && tr.dataset.id) oeffnen(D.eintraege.find(e => e.id === tr.dataset.id));
-  else oeffnen(null);
+  if(ev.target.closest('a,button')) return;
+  const z = ev.target.closest('.eintrag'); if(z) oeffnen(finde(z.dataset.id));
 });
-$('#hinweis').addEventListener('dblclick', () => oeffnen(null));
-$('#bNeu').addEventListener('click', () => oeffnen(null));
+$('#zeilen').addEventListener('click', ev => {
+  const b = ev.target.closest('button[data-a]'); if(!b) return;
+  const e = finde(b.closest('.eintrag').dataset.id); if(!e) return;
+  const a = b.dataset.a;
+  if(a === 'bearbeiten') oeffnen(e);
+  else if(a === 'kopieren') oeffnen(Object.assign({}, e, {id:null, datum:heute(), erstellt:null, geaendert:null, erledigt_am:'', links:e.links.map(l => Object.assign({}, l))}), true);
+  else if(a === 'erledigt'){
+    e.offen = false; e.erledigt_am = heute(); e.geaendert = {von: aktBearbeiter(), am: jetztIso()};
+    rendern(e.id); geaendert();
+    toast('Als erledigt markiert', 'Rückgängig', () => { e.offen = true; e.erledigt_am = ''; rendern(e.id); geaendert(); });
+  }
+  else if(a === 'loeschen') loeschen(e);
+});
+function loeschen(e){
+  const i = D.eintraege.indexOf(e); if(i < 0) return;
+  D.eintraege.splice(i, 1); rendern(); geaendert();
+  toast('Eintrag vom ' + e.datum + ' gelöscht', 'Rückgängig', () => { D.eintraege.splice(i, 0, e); sortieren(); rendern(e.id); geaendert(); });
+}
+function aktBearbeiter(){ return ls(LS_BEARB) || D.bearbeiter || ''; }
+function bearbeiterListe(){
+  const s = new Set(D.eintraege.map(e => e.bearbeiter).filter(Boolean)); const a = aktBearbeiter(); if(a) s.add(a);
+  $('#lBearb').innerHTML = [...s].sort().map(n => '<option value="'+esc(n)+'">').join('');
+}
 
 /* ---------- Dialog Eintrag ---------- */
 const dE = $('#dEintrag'); let aktuell = null;
-function linkBlock(nr, l){
-  const div = document.createElement('div'); div.className = 'linkblock';
-  div.innerHTML = '<label>SAP Link '+nr+' – URL</label><input class="lu" autocomplete="off">'
-    + '<label>SAP Link '+nr+' – Anzeigetext</label><input class="lt" autocomplete="off">';
+$('#eKat').innerHTML = '<option value="">–</option>' + KATEGORIEN.map(([k]) => '<option>'+esc(k)+'</option>').join('');
+function linkZeile(l){
+  const div = document.createElement('div'); div.className = 'lz';
+  div.innerHTML = '<input class="lu" autocomplete="off" placeholder="sapplm://…, \\\\server\\… oder https://…" aria-label="Link">'
+    + '<input class="lt" autocomplete="off" placeholder="z. B. Auslegungshistorie" aria-label="Anzeigetext">'
+    + '<button type="button" title="Link entfernen" aria-label="Link entfernen">×</button>';
   div.querySelector('.lu').value = l ? l.url : '';
   div.querySelector('.lt').value = l ? l.text : '';
+  div.querySelector('button').onclick = () => { div.remove(); if(!$('#eLinks').children.length) linkZeile(); };
   $('#eLinks').appendChild(div);
   return div;
 }
-function oeffnen(e){
-  aktuell = e || null;
-  $('#dTitel').textContent = e ? 'Aktivitätenliste – Eintrag bearbeiten' : 'Aktivitätenliste – Eintrag erfassen';
-  $('#eOk').textContent = e ? 'Übernehmen' : 'Eintragen';
-  $('#eLoeschen').hidden = !e;
-  $('#eDatum').value = e ? e.datum : heute();
-  $('#eText').value = e ? e.text : '';
-  $('#eBearb').value = e ? e.bearbeiter : (ls(LS_BEARB) || D.bearbeiter || '');
-  $('#eLinks').innerHTML = '';
-  const links = e && e.links.length ? e.links : [];
-  const anz = Math.max(2, links.length);
-  for(let i=0; i<anz; i++) linkBlock(i+1, links[i]);
-  $('#eFehler').textContent = '';
-  dE.showModal();
-  (e ? $('#eText') : $('#eText')).focus();
+function offenUi(){
+  const o = $('#eOffen').checked;
+  $('#eWvBox').style.opacity = o ? 1 : .45; $('#eWv').disabled = !o;
+  $('#eOkInfo').textContent = (!o && aktuell && aktuell.erledigt_am) ? 'erledigt am ' + aktuell.erledigt_am : '';
 }
-$('#eLinkPlus').addEventListener('click', () => {
-  const b = linkBlock($('#eLinks').children.length + 1); b.querySelector('.lu').focus();
-});
+$('#eOffen').addEventListener('change', offenUi);
+function oeffnen(e, kopie){
+  aktuell = (e && !kopie) ? e : null;
+  $('#dTitel').textContent = aktuell ? 'Eintrag bearbeiten' : (kopie ? 'Eintrag kopieren' : 'Neuer Eintrag');
+  $('#eOk').textContent = aktuell ? 'Übernehmen' : 'Eintragen';
+  $('#eLoeschen').hidden = !aktuell;
+  $('#eDatum').value = e ? e.datum : heute();
+  $('#eKat').value = e ? (e.kat || '') : '';
+  $('#eText').value = e ? e.text : '';
+  $('#eBearb').value = aktuell ? aktuell.bearbeiter : aktBearbeiter();
+  $('#eOffen').checked = !!(e && e.offen);
+  $('#eWv').value = e ? (e.wv || '') : '';
+  $('#eLinks').innerHTML = '';
+  (e && e.links.length ? e.links : [null]).forEach(l => linkZeile(l));
+  $('#eFehler').textContent = '';
+  let meta = '';
+  if(aktuell && aktuell.erstellt) meta = 'Angelegt ' + isoText(aktuell.erstellt.am) + (aktuell.erstellt.von ? ' von ' + aktuell.erstellt.von : '');
+  $('#eMeta').textContent = meta;
+  offenUi();
+  dE.showModal();
+  $('#eText').focus();
+}
+$('#eHeute').addEventListener('click', () => { $('#eDatum').value = heute(); });
+$('#eLinkPlus').addEventListener('click', () => linkZeile().querySelector('.lu').focus());
 $('#eAbbr').addEventListener('click', () => dE.close());
-$('#eLoeschen').addEventListener('click', () => {
-  if(!aktuell) return;
-  if(!confirm('Eintrag vom ' + aktuell.datum + ' wirklich löschen?')) return;
-  D.eintraege = D.eintraege.filter(x => x !== aktuell);
-  dE.close(); rendern(); geaendert();
-});
+$('#eLoeschen').addEventListener('click', () => { const e = aktuell; dE.close(); if(e) loeschen(e); });
 $('#fEintrag').addEventListener('submit', ev => {
   ev.preventDefault();
   const datum = datumNorm($('#eDatum').value), text = $('#eText').value.trim(), bea = $('#eBearb').value.trim();
-  if(!datum){ $('#eFehler').textContent = 'Bitte ein gültiges Datum im Format TT.MM.JJJJ eingeben.'; $('#eDatum').focus(); return; }
-  if(!text){ $('#eFehler').textContent = 'Bitte eine Aktivität eingeben.'; $('#eText').focus(); return; }
+  const offen = $('#eOffen').checked, wvRoh = $('#eWv').value.trim(), wv = offen && wvRoh ? datumNorm(wvRoh) : '';
+  if(!datum){ $('#eFehler').textContent = 'Das Datum fehlt oder ist ungültig – bitte als TT.MM.JJJJ eingeben.'; $('#eDatum').focus(); return; }
+  if(!text){ $('#eFehler').textContent = 'Bitte beschreiben, was gemacht wurde.'; $('#eText').focus(); return; }
+  if(offen && wvRoh && !wv){ $('#eFehler').textContent = 'Die Wiedervorlage ist kein gültiges Datum (TT.MM.JJJJ oder +7 für in 7 Tagen).'; $('#eWv').focus(); return; }
   const links = [...$('#eLinks').children].map(b => ({url: b.querySelector('.lu').value.trim(), text: b.querySelector('.lt').value.trim()}))
     .filter(l => l.url || l.text);
-  const ziel = aktuell || {id: 'e' + Date.now().toString(36)};
-  Object.assign(ziel, {datum, text, bearbeiter: bea, links});
-  if(!aktuell) D.eintraege.push(ziel);
+  const ziel = aktuell || {id: 'e' + Date.now().toString(36), erstellt: {von: bea, am: jetztIso()}};
+  const warOffen = !!ziel.offen;
+  Object.assign(ziel, {datum, text, bearbeiter: bea, links, kat: $('#eKat').value, offen, wv});
+  if(warOffen && !offen) ziel.erledigt_am = heute();
+  if(offen) ziel.erledigt_am = '';
+  if(aktuell) ziel.geaendert = {von: bea, am: jetztIso()};
+  else D.eintraege.push(ziel);
   if(bea){ ls(LS_BEARB, bea); D.bearbeiter = bea; }
-  sortieren(); dE.close(); rendern(); geaendert();
+  sortieren(); dE.close(); rendern(ziel.id); geaendert();
+  toast(aktuell ? 'Eintrag geändert' : 'Eintrag angelegt');
 });
 dE.addEventListener('keydown', ev => {
-  if(ev.key === 'Enter' && ev.ctrlKey){ ev.preventDefault(); $('#fEintrag').requestSubmit(); }
-  if(ev.key === 'Enter' && ev.target.tagName === 'INPUT'){ ev.preventDefault(); $('#fEintrag').requestSubmit(); }
+  if(ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)){ ev.preventDefault(); $('#fEintrag').requestSubmit(); }
+  else if(ev.key === 'Enter' && ev.target.tagName === 'INPUT' && ev.target.type !== 'checkbox'){ ev.preventDefault(); $('#fEintrag').requestSubmit(); }
 });
-$('#eDatum').addEventListener('blur', () => { const n = datumNorm($('#eDatum').value); if(n) $('#eDatum').value = n; });
+['#eDatum', '#eWv'].forEach(s => $(s).addEventListener('blur', () => { const n = datumNorm($(s).value); if(n) $(s).value = n; }));
+$('#bNeu').addEventListener('click', () => oeffnen(null));
 
 /* ---------- Speichern ---------- */
 function dateiText(daten){
-  const json = JSON.stringify(daten).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, c => c === '\u2028' ? '\\u2028' : '\\u2029');
+  const json = JSON.stringify(daten).split(LT).join(BS + 'u003c')
+    .split(String.fromCharCode(0x2028)).join(BS + 'u2028').split(String.fromCharCode(0x2029)).join(BS + 'u2029');
   return VORLAGE.replace(/(<script id="daten" type="application\/json">)[\s\S]*?(<\/script>)/, (m, a, b) => a + json + b);
 }
 function dateiName(){
@@ -442,43 +686,92 @@ function aktuellerName(){
   const n = decodeURIComponent(location.pathname.split('/').pop() || '');
   return /\.html?$/i.test(n) ? n : dateiName();
 }
-function herunterladen(text, name){
+function herunterladen(inhalt, name, typ){
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([text], {type:'text/html;charset=utf-8'}));
+  a.href = URL.createObjectURL(new Blob([inhalt], {type: typ || 'text/html;charset=utf-8'}));
   a.download = name; document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
-async function schreiben(text, name, unter){
+async function schreiben(text, name, unter, art){
+  art = art || {description:'HTML-Datei', accept:{'text/html':['.html','.htm']}};
   if(window.showSaveFilePicker){
     try{
       let h = unter ? null : dateiHandle;
-      if(!h) h = await window.showSaveFilePicker({suggestedName: name, types:[{description:'HTML-Datei', accept:{'text/html':['.html','.htm']}}]});
+      if(!h) h = await window.showSaveFilePicker({suggestedName: name, types:[art]});
       const w = await h.createWritable(); await w.write(text); await w.close();
       return h;
     }catch(e){ if(e && e.name === 'AbortError') return false; console.warn(e); }
   }
-  herunterladen(text, name); return {name};
+  herunterladen(text, name, Object.keys(art.accept)[0] + ';charset=utf-8'); return {name};
 }
 async function speichern(unter){
   const vorher = D.gespeichert;
-  D.gespeichert = new Date().toISOString(); D.programm = VERSION;
+  D.gespeichert = jetztIso(); D.programm = VERSION;
   const h = await schreiben(dateiText(D), unter ? dateiName() : aktuellerName(), unter);
   if(!h){ D.gespeichert = vorher; return; }
-  if(h.createWritable && !unter) dateiHandle = h;
-  if(h.createWritable && unter) dateiHandle = h;
-  sauber(h.name);
+  if(h.createWritable) dateiHandle = h;
+  sauber(h.name); toast('Gespeichert: ' + h.name);
 }
 $('#bSpeichern').addEventListener('click', () => speichern(false));
-$('#bSpeichernUnter').addEventListener('click', () => speichern(true));
-$('#bDrucken').addEventListener('click', () => window.print());
-$('#bLeer').addEventListener('click', async () => {
-  const leer = normalisieren({logo: D.logo, bearbeiter: D.bearbeiter});
-  leer.kopf.datum = heute();
-  const h = await schreiben(dateiText(leer), 'Aktivitaetenliste_neu.html', true);
-  if(h) status('Leere Liste angelegt: ' + h.name);
+
+/* ---------- Menü ---------- */
+const menue = $('#menue');
+function menueZu(){ menue.classList.remove('auf'); $('#bMehr').setAttribute('aria-expanded', 'false'); }
+$('#bMehr').addEventListener('click', ev => { ev.stopPropagation(); const auf = menue.classList.toggle('auf'); $('#bMehr').setAttribute('aria-expanded', auf); });
+document.addEventListener('click', ev => { if(!menue.contains(ev.target)) menueZu(); });
+menue.querySelector('.menue-liste').addEventListener('click', async ev => {
+  const b = ev.target.closest('button[data-m]'); if(!b) return; menueZu();
+  const m = b.dataset.m;
+  if(m === 'unter') speichern(true);
+  else if(m === 'leer'){
+    const leer = normalisieren({logo: D.logo, bearbeiter: D.bearbeiter}); leer.kopf.datum = heute();
+    const h = await schreiben(dateiText(leer), 'Aktivitaetenliste_neu.html', true);
+    if(h) toast('Leere Liste angelegt: ' + h.name);
+  }
+  else if(m === 'word') importOeffnen();
+  else if(m === 'liste') $('#listeDatei').click();
+  else if(m === 'text') textKopieren();
+  else if(m === 'csv') csvSpeichern();
+  else if(m === 'druck') window.print();
 });
+
+/* ---------- Text und CSV ---------- */
+function textKopieren(){
+  const k = D.kopf, liste = sichtbar();
+  let t = 'Aktivitätenliste ' + [k.ofnr, k.teilename].filter(Boolean).join(' – ') + (k.kunde ? ' (' + k.kunde + ')' : '') + '\n\n';
+  for(const e of liste){
+    t += e.datum + '  ' + (e.kat ? '[' + e.kat + '] ' : '') + e.text.replace(/\n/g, '\n            ');
+    if(e.bearbeiter) t += '  (' + e.bearbeiter + ')';
+    if(e.offen) t += '\n            OFFEN' + (e.wv ? ' – Wiedervorlage ' + e.wv : '');
+    e.links.forEach(l => { t += '\n            ' + (l.text && l.url ? l.text + ': ' + l.url : (l.text || l.url)); });
+    t += '\n';
+  }
+  const fertig = () => toast(liste.length + (liste.length === 1 ? ' Eintrag' : ' Einträge') + ' als Text kopiert – in Mail oder Teams einfügen');
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(fertig, () => alt());
+  else alt();
+  function alt(){
+    const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); fertig(); }catch(e){ toast('Kopieren nicht möglich'); } ta.remove();
+  }
+}
+async function csvSpeichern(){
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const zeilen = [['Datum','Art','Aktivität','Links','Bearbeiter','Offen','Wiedervorlage','Erledigt am'].map(q).join(';')];
+  for(const e of sichtbar()) zeilen.push([e.datum, e.kat, e.text, e.links.map(l => (l.text ? l.text + ': ' : '') + l.url).join(' | '),
+    e.bearbeiter, e.offen ? 'ja' : '', e.wv, e.erledigt_am].map(q).join(';'));
+  const name = dateiName().replace(/\.html$/, '') + '_' + sortKey(heute()) + '.csv';
+  const h = await schreiben(String.fromCharCode(0xFEFF) + zeilen.join('\r\n'), name, true, {description:'CSV-Datei', accept:{'text/csv':['.csv']}});
+  if(h) toast('CSV gespeichert: ' + h.name);
+}
+
+/* ---------- Tastatur ---------- */
 document.addEventListener('keydown', ev => {
-  if((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 's'){ ev.preventDefault(); speichern(false); }
+  if((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 's'){ ev.preventDefault(); speichern(false); return; }
+  const tippt = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) || document.activeElement.isContentEditable;
+  if(tippt || document.querySelector('dialog[open]') || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  if(ev.key === 'n' || ev.key === 'N' || ev.key === 'Insert'){ ev.preventDefault(); oeffnen(null); }
+  else if(ev.key === '/'){ ev.preventDefault(); $('#suche').focus(); }
+  else if(ev.key === 'Escape') menueZu();
 });
 window.addEventListener('beforeunload', ev => { if(dirty){ ev.preventDefault(); ev.returnValue = ''; } });
 
@@ -489,29 +782,24 @@ window.addEventListener('beforeunload', ev => { if(dirty){ ev.preventDefault(); 
   const gesp = D.gespeichert ? Date.parse(D.gespeichert) : 0;
   if(ent.stand <= gesp){ ls(LS_ENTWURF, null); return; }
   const b = $('#banner');
-  b.innerHTML = '<span>Es gibt nicht gespeicherte Änderungen vom ' + new Date(ent.stand).toLocaleString('de-DE') + '.</span>'
+  b.innerHTML = '<span>Es gibt nicht gespeicherte Änderungen vom ' + esc(new Date(ent.stand).toLocaleString('de-DE')) + '.</span>'
     + '<button id="wHer">Wiederherstellen</button><button id="wWeg">Verwerfen</button>';
   b.classList.add('an');
-  $('#wHer').onclick = () => {
-    D = normalisieren(ent.daten); b.classList.remove('an');
-    document.querySelectorAll('[data-k]').forEach(el => { el.value = D.kopf[el.dataset.k] || ''; if(el.tagName==='TEXTAREA') hoehe(el); });
-    logoZeigen(); titel(); rendern(); dirty = true; status();
-  };
+  $('#wHer').onclick = () => { D = normalisieren(ent.daten); b.classList.remove('an'); kopfZeigen(); logoZeigen(); titel(); sortieren(); rendern(); dirty = true; status(); };
   $('#wWeg').onclick = () => { ls(LS_ENTWURF, null); b.classList.remove('an'); };
 })();
 
 /* ---------- Aus Word übernehmen ---------- */
 const dI = $('#dImport'); let importErgebnis = null;
-$('#bImport').addEventListener('click', () => {
+function importOeffnen(){
   $('#iFeld').innerHTML = ''; $('#iVorschau').textContent = ''; $('#iOk').disabled = true; importErgebnis = null;
   dI.showModal(); $('#iFeld').focus();
-});
+}
 $('#iAbbr').addEventListener('click', () => dI.close());
-const ws = s => String(s||'').replace(/[ \s]+/g,' ').trim();
+const ws = s => String(s||'').replace(/\s+/g,' ').trim();
 function zellText(td){
   const ps = td.querySelectorAll('p');
-  const t = ps.length ? [...ps].map(p => ws(p.textContent)).filter(Boolean).join('\n') : ws(td.textContent);
-  return t;
+  return ps.length ? [...ps].map(p => ws(p.textContent)).filter(Boolean).join('\n') : ws(td.textContent);
 }
 function wordAuswerten(html){
   const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -522,15 +810,15 @@ function wordAuswerten(html){
     if(tds.length < 4) return;
     const datum = datumNorm(zellText(tds[0]));
     if(!datum) return;
-    const text = [...tds[1].querySelectorAll('p')].map(p => ws(p.textContent)).filter(Boolean).join('\n') || ws(tds[1].textContent);
+    const text = zellText(tds[1]);
     const links = [];
     tds[2].querySelectorAll('a[href]').forEach(a => {
       const t = ws(a.textContent), u = a.getAttribute('href') || '';
-      if(!u || u.startsWith('#')) { if(t) links.push({url:'', text:t}); return; }
+      if(!u || u.startsWith('#')){ if(t) links.push({url:'', text:t}); return; }
       links.push({url: u, text: t});
     });
     if(!links.length){ const t = zellText(tds[2]); if(t) t.split('\n').forEach(x => links.push({url:'', text:x})); }
-    eintraege.push({datum, text, links, bearbeiter: ws(tds[tds.length-1].textContent)});
+    eintraege.push({datum, text, links, bearbeiter: ws(tds[tds.length-1].textContent), kat:'', offen:false, wv:'', erledigt_am:''});
   });
   function wert(re){
     for(let i=0; i<zeilen.length; i++){
@@ -541,11 +829,9 @@ function wordAuswerten(html){
     }
     return '';
   }
-  const kopf = {
-    kunde: wert(/Kunde:?/i), teilename: wert(/Teilename:?/i), bemerkung: wert(/Bemerkung:?/i),
-    ofnr: wert(/FUCHS-?\s*Nr\.?:?/i), anfrage: wert(/Anfragenummer:?/i)
-  };
-  const dm = wert(/^Datum:?/i); kopf.datum = datumNorm(dm) || '';
+  const kopf = {kunde: wert(/Kunde:?/i), teilename: wert(/Teilename:?/i), bemerkung: wert(/Bemerkung:?/i),
+    ofnr: wert(/FUCHS-?\s*Nr\.?:?/i), anfrage: wert(/Anfragenummer:?/i)};
+  kopf.datum = datumNorm(wert(/^Datum:?/i)) || '';
   return {eintraege, kopf};
 }
 $('#iFeld').addEventListener('paste', ev => {
@@ -557,7 +843,7 @@ $('#iFeld').addEventListener('paste', ev => {
   const k = importErgebnis.kopf, neu = importErgebnis.eintraege.filter(e => !D.eintraege.some(x => x.datum === e.datum && x.text === e.text));
   importErgebnis.neu = neu;
   $('#iVorschau').innerHTML = '<b>' + importErgebnis.eintraege.length + '</b> Einträge erkannt, davon <b>' + neu.length + '</b> neu.'
-    + (k.ofnr || k.teilename ? '<br>Kopf: ' + esc([k.kunde, k.teilename, k.ofnr, k.anfrage].filter(Boolean).join(' · ')) : '');
+    + (k.ofnr || k.teilename ? '<br>Kopf: ' + esc([k.kunde, k.teilename, k.ofnr, k.anfrage].filter(Boolean).join(', ')) : '');
   $('#iOk').disabled = !(neu.length || k.ofnr || k.teilename);
 });
 $('#iOk').addEventListener('click', () => {
@@ -565,36 +851,46 @@ $('#iOk').addEventListener('click', () => {
   const k = importErgebnis.kopf;
   for(const key of Object.keys(k)) if(k[key] && (!D.kopf[key] || (key==='datum' && NEU && !D.eintraege.length))) D.kopf[key] = k[key];
   importErgebnis.neu.forEach((e,i) => { e.id = 'e' + Date.now().toString(36) + i; D.eintraege.push(e); });
-  sortieren();
-  document.querySelectorAll('[data-k]').forEach(el => { el.value = D.kopf[el.dataset.k] || ''; if(el.tagName==='TEXTAREA') hoehe(el); });
-  titel(); rendern(); geaendert(); dI.close();
+  sortieren(); kopfZeigen(); titel(); rendern(); geaendert(); dI.close();
+  toast(importErgebnis.neu.length + ' Einträge aus Word übernommen');
 });
 
 /* ---------- Aus Liste übernehmen (z. B. Liste einer älteren Version) ---------- */
-$('#bListe').addEventListener('click', () => $('#listeDatei').click());
-$('#listeDatei').addEventListener('change', ev => {
-  const f = ev.target.files[0]; ev.target.value = ''; if(!f) return;
+function listeLaden(f){
   const r = new FileReader();
   r.onload = () => {
     const m = String(r.result).match(/<script id="daten" type="application\/json">([\s\S]*?)<\/script>/);
     let neu = null;
     try{ neu = m ? JSON.parse(m[1]) : null; }catch(e){ neu = null; }
-    if(!neu || !neu.kopf){ alert('In „' + f.name + '“ wurden keine Daten einer Aktivitätenliste gefunden.'); return; }
+    if(!neu || !neu.kopf){ toast('In „' + f.name + '“ stehen keine Daten einer Aktivitätenliste.'); return; }
     if(D.eintraege.length && !confirm('Die aktuelle Liste (' + D.eintraege.length + ' Einträge) durch „' + f.name + '“ ersetzen?')) return;
     const logo = D.logo;
     D = normalisieren(neu); if(!D.logo) D.logo = logo; delete D.gespeichert;
-    document.querySelectorAll('[data-k]').forEach(el => { el.value = D.kopf[el.dataset.k] || ''; if(el.tagName==='TEXTAREA') hoehe(el); });
-    sortieren(); logoZeigen(); titel(); rendern(); geaendert();
-    status(); $('#status').title = 'Übernommen aus ' + f.name;
+    kopfZeigen(); sortieren(); logoZeigen(); titel(); rendern(); geaendert();
+    toast(D.eintraege.length + ' Einträge aus ' + f.name + ' übernommen');
   };
   r.readAsText(f, 'utf-8');
+}
+$('#listeDatei').addEventListener('change', ev => { const f = ev.target.files[0]; ev.target.value = ''; if(f) listeLaden(f); });
+
+/* ---------- Ziehen und ablegen ---------- */
+let ziehTiefe = 0;
+const hatDatei = ev => ev.dataTransfer && [...ev.dataTransfer.types].includes('Files');
+document.addEventListener('dragenter', ev => { if(!hatDatei(ev)) return; ziehTiefe++; $('#ziehen').classList.add('an'); });
+document.addEventListener('dragleave', ev => { if(!hatDatei(ev)) return; if(--ziehTiefe <= 0){ ziehTiefe = 0; $('#ziehen').classList.remove('an'); } });
+document.addEventListener('dragover', ev => { if(hatDatei(ev)) ev.preventDefault(); });
+document.addEventListener('drop', ev => {
+  if(!hatDatei(ev)) return;
+  ev.preventDefault(); ziehTiefe = 0; $('#ziehen').classList.remove('an');
+  const f = ev.dataTransfer.files[0]; if(!f) return;
+  if(/^image\//.test(f.type)) logoLaden(f);
+  else if(/\.html?$/i.test(f.name)) listeLaden(f);
+  else toast('Nur Bilder (Logo) oder gespeicherte Listen (.html) ablegen');
 });
 
 /* ---------- Start ---------- */
-const VERSION = (document.querySelector('meta[name="version"]') || {}).content || '';
 $('#ver').textContent = VERSION;
-sortieren(); logoZeigen(); titel(); rendern(); status();
-document.querySelectorAll('textarea.feld').forEach(hoehe);
+sortieren(); kopfZeigen(); logoZeigen(); titel(); rendern(); status();
 window.__aktliste = {get daten(){ return D; }, wordAuswerten, dateiText};
 })();
 </script>
