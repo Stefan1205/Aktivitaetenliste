@@ -1,4 +1,4 @@
-// Test „Aus Word übernehmen“ (ab 1.2.1, Bilder ab 1.2.2) mit der erfundenen Word-Datei aus tests/word_beispiel.py
+// Test „Aus Word übernehmen“ (ab 1.2.1, Bilder ab 1.2.2, Druck ab 1.2.3) mit der erfundenen Word-Datei aus tests/word_beispiel.py
 //   python3 tests/word_beispiel.py /tmp/beispiel.docx && node tests/import_test.js /tmp/beispiel.docx [bild.png]
 const { chromium } = require('playwright'); const path = require('path');
 (async () => {
@@ -31,6 +31,12 @@ const { chromium } = require('playwright'); const path = require('path');
   await p.click('#iOk'); await p.waitForTimeout(400);
   const n2 = await p.evaluate(() => window.__aktliste.daten.eintraege.reduce((a, x) => a + x.bilder.length, 0));
   pr(n2 === 2, 'Bilder nachgetragen');
+  // Druck (ab 1.2.3, M0080): Schriftfeld dreispaltig und Bearbeiter sichtbar wie am Bildschirm
+  await p.emulateMedia({media:'print'});
+  const druck = await p.evaluate(() => ({sp: getComputedStyle(document.querySelector('.sf')).gridTemplateColumns.split(' ').length,
+    b: getComputedStyle(document.querySelector('.eintrag .b')).display}));
+  pr(druck.sp === 3 && druck.b !== 'none', 'Druck: ' + JSON.stringify(druck));
+  await p.emulateMedia({media:'screen'});
   if(fehler.length) throw new Error(fehler.join('\n'));
   console.log('import_test: OK –', vorschau);
   await b.close();

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<meta name="version" content="1.2.2">
+<meta name="version" content="1.2.3">
 <title>Aktivitätenliste</title>
 <style>
 :root{
@@ -200,7 +200,8 @@ dialog::backdrop{background:rgba(15,25,55,.35)}
   align-items:center;justify-content:center;font-size:18px;color:var(--blau);font-weight:600}
 .ziehen.an{display:flex}
 
-@media (max-width:860px){
+/* nur am Bildschirm: beim Drucken ist die A4-Seite auch schmaler als 860 px (ab 1.2.3, M0080) */
+@media screen and (max-width:860px){
   .blatt{width:auto;margin:0;padding:16px;min-height:0}
   .leiste{flex-wrap:wrap}
   .sf{grid-template-columns:1fr 1fr}
