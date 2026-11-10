@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<meta name="version" content="1.2.0">
+<meta name="version" content="1.2.1">
 <title>Aktivitätenliste</title>
 <style>
 :root{
@@ -841,24 +841,69 @@ function zellText(td){
   const ps = td.querySelectorAll('p');
   return ps.length ? [...ps].map(p => ws(p.textContent)).filter(Boolean).join('\n') : ws(td.textContent);
 }
+/* Spalten der Aktivitäten-Tabelle (ab 1.2.1): aus der Kopfzeile (Datum, Aktivität/Text, Link, Bearbeiter),
+   sonst nach Anzahl – 4 Spalten: Datum, Text, Links, Bearbeiter; 3 Spalten: Datum, Text, Bearbeiter; 2: Datum, Text */
+function spaltenAusKopf(tds){
+  const t = tds.map(td => ws(td.textContent).toLowerCase());
+  const such = re => t.findIndex(x => re.test(x));
+  const sp = {datum: such(/^datum\b|^date\b/), text: such(/aktivit|t[äa]tigkeit|beschreib|vorgang|bemerkung|^text\b|inhalt/),
+    links: such(/link|verweis|ablage|dokument|pfad/), bearb: such(/bearbeit|^name\b|^wer\b|k[üu]rzel|verantw/)};
+  return sp.datum >= 0 && sp.text >= 0 ? sp : null;
+}
+function spaltenNachAnzahl(n){
+  if(n >= 4) return {datum:0, text:1, links:2, bearb:n-1};
+  if(n === 3) return {datum:0, text:1, links:-1, bearb:2};
+  if(n === 2) return {datum:0, text:1, links:-1, bearb:-1};
+  return null;
+}
+function linksAus(td){
+  const links = [];
+  td.querySelectorAll('a[href]').forEach(a => {
+    const t = ws(a.textContent), u = a.getAttribute('href') || '';
+    if(!u || u.startsWith('#')){ if(t) links.push({url:'', text:t}); return; }
+    if(!links.some(l => l.url === u && l.text === t)) links.push({url: u, text: t});
+  });
+  return links;
+}
+/* Text der Aktivität: Absätze, die nur aus einem Link bestehen, stehen schon unter „Links“ */
+function textOhneLinkAbsaetze(td){
+  const ps = td.querySelectorAll('p');
+  if(!ps.length) return zellText(td);
+  return [...ps].filter(p => { const a = p.querySelectorAll('a[href]'); if(!a.length) return true;
+    return ws(p.textContent) !== ws([...a].map(x => x.textContent).join(' ')); })
+    .map(p => ws(p.textContent)).filter(Boolean).join('\n');
+}
 function wordAuswerten(html){
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const eintraege = [], zeilen = [];
-  doc.querySelectorAll('tr').forEach(tr => {
-    const tds = [...tr.children].filter(c => /^T[DH]$/.test(c.tagName));
-    tds.forEach(td => zellText(td).split('\n').forEach(z => z && zeilen.push(z)));
-    if(tds.length < 4) return;
-    const datum = datumNorm(zellText(tds[0]));
-    if(!datum) return;
-    const text = zellText(tds[1]);
-    const links = [];
-    tds[2].querySelectorAll('a[href]').forEach(a => {
-      const t = ws(a.textContent), u = a.getAttribute('href') || '';
-      if(!u || u.startsWith('#')){ if(t) links.push({url:'', text:t}); return; }
-      links.push({url: u, text: t});
+  doc.querySelectorAll('table').forEach(tab => {
+    let sp = null, letzter = null;
+    [...tab.rows].forEach(tr => {
+      const tds = [...tr.cells];
+      tds.forEach(td => zellText(td).split('\n').forEach(z => z && zeilen.push(z)));
+      const kopf = spaltenAusKopf(tds);
+      if(kopf && !datumNorm(zellText(tds[kopf.datum]))){ sp = kopf; letzter = null; return; }
+      const s = sp || spaltenNachAnzahl(tds.length);
+      if(!s || tds.length <= Math.max(s.datum, s.text)) return;
+      const datum = datumNorm(zellText(tds[s.datum]));
+      const tdT = tds[s.text];
+      const links = linksAus(tdT);
+      if(s.links >= 0 && tds[s.links] && s.links !== s.text){
+        const l2 = linksAus(tds[s.links]);
+        if(l2.length) l2.forEach(l => links.push(l));
+        else zellText(tds[s.links]).split('\n').filter(Boolean).forEach(x => links.push({url:'', text:x}));
+      }
+      const text = textOhneLinkAbsaetze(tdT);
+      const bearbeiter = s.bearb >= 0 && tds[s.bearb] && s.bearb !== s.text ? ws(tds[s.bearb].textContent) : '';
+      if(!datum){
+        /* Zeile ohne Datum (z. B. „war …“ zwischen zwei Abschnitten): als Info zum Datum des vorigen Eintrags */
+        if(sp && letzter && (text || links.length))
+          eintraege.push(letzter = {datum: letzter.datum, text, links, bearbeiter, kat:'Info', offen:false, wv:'', erledigt_am:'', bilder:[]});
+        return;
+      }
+      if(!text && !links.length) return;
+      eintraege.push(letzter = {datum, text, links, bearbeiter, kat:'', offen:false, wv:'', erledigt_am:'', bilder:[]});
     });
-    if(!links.length){ const t = zellText(tds[2]); if(t) t.split('\n').forEach(x => links.push({url:'', text:x})); }
-    eintraege.push({datum, text, links, bearbeiter: ws(tds[tds.length-1].textContent), kat:'', offen:false, wv:'', erledigt_am:'', bilder:[]});
   });
   function wert(re){
     for(let i=0; i<zeilen.length; i++){
@@ -871,7 +916,7 @@ function wordAuswerten(html){
   }
   const kopf = {kunde: wert(/Kunde:?/i), teilename: wert(/Teilename:?/i), bemerkung: wert(/Bemerkung:?/i),
     ofnr: wert(/FUCHS-?\s*Nr\.?:?/i), anfrage: wert(/Anfragenummer:?/i)};
-  kopf.datum = datumNorm(wert(/^Datum:?/i)) || '';
+  kopf.datum = datumNorm(wert(/^Datum:/i)) || datumNorm(wert(/^Datum\b/i)) || '';
   return {eintraege, kopf};
 }
 $('#iFeld').addEventListener('paste', ev => {

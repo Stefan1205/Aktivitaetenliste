@@ -15,8 +15,13 @@ Läuft ohne Installation im Edge/Chrome; die Einträge stehen in der Datei selbs
 - Speichern (Strg+S) überschreibt die Datei direkt (Edge/Chrome), sonst Download; Entwurf im Browser.
 - Aus Word übernehmen: Word-Datei (.docx/.docm) wählen oder hineinziehen – oder Strg+A/Strg+C im Dokument und
   Strg+V im Dialog. Das alte .doc-Format kann der Browser nicht lesen (in Word als .docx speichern).
+  Die Spalten werden an der Kopfzeile erkannt (Datum, Aktivität/Text, Link, Bearbeiter) – auch Tabellen mit nur drei
+  Spalten; Links im Aktivitätstext kommen unter „Links“, Zeilen ohne Datum (z. B. „war …“) werden Info-Einträge
+  zum vorigen Datum (ab 1.2.1).
 - Weitere: Speichern unter, neue leere Liste, aus Word übernehmen, aus Liste übernehmen (ältere Version),
   Einträge als Text kopieren (für Mail/Teams), CSV für Excel, Drucken/PDF.
 - Tastatur: N neuer Eintrag, / Suche, Strg+Enter im Dialog = Eintragen.
 
 Version: `<meta name="version" content="…">` in `Aktivitaetenliste.html`.
+
+Test des Word-Imports (erfundene Daten): `python3 tests/word_beispiel.py /tmp/b.docx && node tests/import_test.js /tmp/b.docx`
