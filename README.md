@@ -17,7 +17,8 @@ Läuft ohne Installation im Edge/Chrome; die Einträge stehen in der Datei selbs
   Strg+V im Dialog. Das alte .doc-Format kann der Browser nicht lesen (in Word als .docx speichern).
   Die Spalten werden an der Kopfzeile erkannt (Datum, Aktivität/Text, Link, Bearbeiter) – auch Tabellen mit nur drei
   Spalten; Links im Aktivitätstext kommen unter „Links“, Zeilen ohne Datum (z. B. „war …“) werden Info-Einträge
-  zum vorigen Datum (ab 1.2.1).
+  zum vorigen Datum (ab 1.2.1). Bilder und Screenshots in der Aktivitäten-Spalte kommen als Bilder zum Eintrag mit
+  (ab 1.2.2; auch nachträglich für schon übernommene Einträge ohne Bild); WMF/EMF-Grafiken kann der Browser nicht zeigen.
 - Weitere: Speichern unter, neue leere Liste, aus Word übernehmen, aus Liste übernehmen (ältere Version),
   Einträge als Text kopieren (für Mail/Teams), CSV für Excel, Drucken/PDF.
 - Tastatur: N neuer Eintrag, / Suche, Strg+Enter im Dialog = Eintragen.

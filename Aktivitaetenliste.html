@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<meta name="version" content="1.2.1">
+<meta name="version" content="1.2.2">
 <title>Aktivitätenliste</title>
 <style>
 :root{
@@ -894,15 +894,18 @@ function wordAuswerten(html){
         else zellText(tds[s.links]).split('\n').filter(Boolean).forEach(x => links.push({url:'', text:x}));
       }
       const text = textOhneLinkAbsaetze(tdT);
+      const wbilder = [...tdT.querySelectorAll('img[src^="data:image/"]')].map(i => i.getAttribute('src'));
       const bearbeiter = s.bearb >= 0 && tds[s.bearb] && s.bearb !== s.text ? ws(tds[s.bearb].textContent) : '';
       if(!datum){
-        /* Zeile ohne Datum (z. B. „war …“ zwischen zwei Abschnitten): als Info zum Datum des vorigen Eintrags */
+        /* Zeile ohne Datum (z. B. „war …“ zwischen zwei Abschnitten): als Info zum Datum des vorigen Eintrags;
+           nur ein Bild: gehört zum vorigen Eintrag */
+        if(sp && letzter && !text && !links.length && wbilder.length){ letzter.wordBilder.push(...wbilder); return; }
         if(sp && letzter && (text || links.length))
-          eintraege.push(letzter = {datum: letzter.datum, text, links, bearbeiter, kat:'Info', offen:false, wv:'', erledigt_am:'', bilder:[]});
+          eintraege.push(letzter = {datum: letzter.datum, text, links, bearbeiter, kat:'Info', offen:false, wv:'', erledigt_am:'', bilder:[], wordBilder: wbilder});
         return;
       }
-      if(!text && !links.length) return;
-      eintraege.push(letzter = {datum, text, links, bearbeiter, kat:'', offen:false, wv:'', erledigt_am:'', bilder:[]});
+      if(!text && !links.length && !wbilder.length) return;
+      eintraege.push(letzter = {datum, text, links, bearbeiter, kat:'', offen:false, wv:'', erledigt_am:'', bilder:[], wordBilder: wbilder});
     });
   });
   function wert(re){
@@ -930,17 +933,37 @@ function importZeigen(html, quelle){
   importErgebnis = wordAuswerten(html);
   const k = importErgebnis.kopf, neu = importErgebnis.eintraege.filter(e => !D.eintraege.some(x => x.datum === e.datum && x.text === e.text));
   importErgebnis.neu = neu;
+  /* Bilder auch für schon vorhandene Einträge ohne Bilder (Liste wurde mit einer älteren Version übernommen) */
+  importErgebnis.nachBilder = importErgebnis.eintraege.filter(e => e.wordBilder.length && !neu.includes(e)).map(e => [e, D.eintraege.find(x => x.datum === e.datum && x.text === e.text)])
+    .filter(([, x]) => x && !(x.bilder || []).length);
+  const nB = neu.reduce((a, e) => a + e.wordBilder.length, 0) + importErgebnis.nachBilder.reduce((a, [e]) => a + e.wordBilder.length, 0);
   $('#iVorschau').innerHTML = '<b>' + importErgebnis.eintraege.length + '</b> Einträge erkannt, davon <b>' + neu.length + '</b> neu.'
+    + (nB ? ' Dazu <b>' + nB + '</b> ' + (nB === 1 ? 'Bild' : 'Bilder') + (importErgebnis.nachBilder.length ? ' (auch für ' + importErgebnis.nachBilder.length + ' vorhandene Einträge)' : '') + '.' : '')
     + (k.ofnr || k.teilename ? '<br>Kopf: ' + esc([k.kunde, k.teilename, k.ofnr, k.anfrage].filter(Boolean).join(', ')) : '');
-  $('#iOk').disabled = !(neu.length || k.ofnr || k.teilename);
+  $('#iOk').disabled = !(neu.length || nB || k.ofnr || k.teilename);
 }
-$('#iOk').addEventListener('click', () => {
+async function wordBilderHolen(quellen, datum){
+  const dateien = [];
+  for(let i = 0; i < quellen.length; i++){
+    try{
+      const blob = await (await fetch(quellen[i])).blob();
+      dateien.push(new File([blob], 'Bild aus Word ' + datum + (quellen.length > 1 ? ' (' + (i + 1) + ')' : '') + '.' + (blob.type.split('/')[1] || 'png'), {type: blob.type}));
+    }catch(e){ /* Bild nicht lesbar */ }
+  }
+  return dateien.length ? bilderVerkleinern(dateien) : [];
+}
+$('#iOk').addEventListener('click', async () => {
   if(!importErgebnis) return;
-  const k = importErgebnis.kopf;
+  const erg = importErgebnis; $('#iOk').disabled = true;
+  const k = erg.kopf;
   for(const key of Object.keys(k)) if(k[key] && (!D.kopf[key] || (key==='datum' && NEU && !D.eintraege.length))) D.kopf[key] = k[key];
-  importErgebnis.neu.forEach((e,i) => { e.id = 'e' + Date.now().toString(36) + i; D.eintraege.push(e); });
+  let nBilder = 0;
+  for(const e of erg.neu){ if(e.wordBilder.length){ e.bilder = await wordBilderHolen(e.wordBilder, e.datum); nBilder += e.bilder.length; } }
+  for(const [e, x] of erg.nachBilder){ x.bilder = await wordBilderHolen(e.wordBilder, e.datum); nBilder += x.bilder.length; }
+  erg.eintraege.forEach(e => delete e.wordBilder);
+  erg.neu.forEach((e,i) => { e.id = 'e' + Date.now().toString(36) + i; D.eintraege.push(e); });
   sortieren(); kopfZeigen(); titel(); rendern(); geaendert(); dI.close();
-  toast(importErgebnis.neu.length + ' Einträge aus Word übernommen');
+  toast(erg.neu.length + ' Einträge aus Word übernommen' + (nBilder ? ', ' + nBilder + (nBilder === 1 ? ' Bild' : ' Bilder') : ''));
 });
 
 /* ---------- Aus Liste übernehmen (z. B. Liste einer älteren Version) ---------- */
@@ -1071,6 +1094,10 @@ async function zipLesen(puffer){
   return {
     namen: Object.keys(ein),
     async text(name){
+      const roh = await this.bytes(name);
+      return roh ? new TextDecoder('utf-8').decode(roh) : null;
+    },
+    async bytes(name){
       const e = ein[name]; if(!e) return null;
       const start = e.lo + 30 + dv.getUint16(e.lo + 26, true) + dv.getUint16(e.lo + 28, true);
       const daten = u8.subarray(start, start + e.gr);
@@ -1078,7 +1105,7 @@ async function zipLesen(puffer){
       if(e.meth === 0) roh = daten;
       else if(e.meth === 8) roh = new Uint8Array(await new Response(new Blob([daten]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
       else throw new Error('Unbekanntes Packverfahren in der Word-Datei');
-      return new TextDecoder('utf-8').decode(roh);
+      return roh;
     }
   };
 }
@@ -1097,6 +1124,12 @@ function wAbsatz(p, rels){
         if(t === 'begin'){ instr = ''; phase = 1; }
         else if(t === 'separate'){ phase = 2; const m = /HYPERLINK\s+"([^"]+)"/.exec(instr); if(m){ out += '<a href="' + escA(m[1]) + '">'; offen = true; } }
         else if(t === 'end'){ if(offen){ out += '</a>'; offen = false; } phase = 0; }
+      } else if(n === 'drawing' || n === 'pict' || n === 'object'){
+        /* Bild im Text (ab 1.2.2): eingebettet (DrawingML) oder alte Form (VML, z. B. eingefügte Screenshots) */
+        for(const x of c.getElementsByTagName('*')){
+          const id = x.localName === 'blip' ? x.getAttributeNS(NS_R, 'embed') : (x.localName === 'imagedata' ? x.getAttributeNS(NS_R, 'id') : '');
+          if(id && rels['@bild:' + id]){ out += '<img src="' + rels['@bild:' + id] + '">'; break; }
+        }
       } else if(n === 'instrText'){ if(phase === 1) instr += c.textContent; }
       else if(n === 't'){ if(phase !== 1) out += esc(c.textContent); }
       else if(n === 'tab') out += ' ';
@@ -1104,7 +1137,7 @@ function wAbsatz(p, rels){
       else if(n === 'fldSimple'){
         const m = /HYPERLINK\s+"([^"]+)"/.exec(c.getAttributeNS(NS_W, 'instr') || '');
         if(m) out += '<a href="' + escA(m[1]) + '">'; lauf(c); if(m) out += '</a>';
-      } else if(['r','smartTag','ins','sdt','sdtContent','customXml'].includes(n)) lauf(c);
+      } else if(['r','smartTag','ins','sdt','sdtContent','customXml','AlternateContent','Fallback'].includes(n)) lauf(c);
     }
   };
   lauf(p);
@@ -1136,6 +1169,14 @@ function wTabelle(tbl, rels){
   }
   return out + '</table>';
 }
+const BILDTYP = {png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg', gif:'image/gif', bmp:'image/bmp', webp:'image/webp'};
+function wordPfad(teil, ziel){
+  if(/^\//.test(ziel)) return ziel.slice(1);
+  const teile = teil.split('/').slice(0, -1);
+  for(const x of ziel.split('/')){ if(x === '..') teile.pop(); else if(x && x !== '.') teile.push(x); }
+  return teile.join('/');
+}
+function b64(u8){ let s = ''; for(let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
 async function docxNachHtml(datei){
   const zip = await zipLesen(await datei.arrayBuffer());
   const xml = t => new DOMParser().parseFromString(t, 'application/xml');
@@ -1150,7 +1191,16 @@ async function docxNachHtml(datei){
     const d = xml(t);
     if(d.getElementsByTagName('parsererror').length) continue;
     const body = d.getElementsByTagNameNS(NS_W, 'body')[0] || d.documentElement;
-    html += wBlock(body, rels);
+    const mitBildern = Object.assign({}, rels);
+    for(const x of d.getElementsByTagName('*')){
+      const id = x.localName === 'blip' ? x.getAttributeNS(NS_R, 'embed') : (x.localName === 'imagedata' ? x.getAttributeNS(NS_R, 'id') : '');
+      if(!id || mitBildern['@bild:' + id] || !rels[id]) continue;
+      const ziel = wordPfad(teil, rels[id]), typ = BILDTYP[(ziel.match(/\.(\w+)$/) || [,''])[1].toLowerCase()];
+      if(!typ) continue;                                  /* WMF/EMF kann der Browser nicht anzeigen */
+      const roh = await zip.bytes(ziel); if(!roh) continue;
+      mitBildern['@bild:' + id] = 'data:' + typ + ';base64,' + b64(roh);
+    }
+    html += wBlock(body, mitBildern);
     /* zusätzlich alle Absätze (auch Textfelder) als Zeilen – für die Kopfdaten */
     html += '<table>' + [...d.getElementsByTagNameNS(NS_W, 'p')].map(p => '<tr><td>' + wAbsatz(p, rels) + '</td></tr>').join('') + '</table>';
   }
