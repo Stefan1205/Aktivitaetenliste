@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<meta name="version" content="1.1.0">
+<meta name="version" content="1.2.0">
 <title>Aktivitätenliste</title>
 <style>
 :root{
@@ -175,6 +175,27 @@ dialog::backdrop{background:rgba(15,25,55,.35)}
   box-shadow:0 8px 24px rgba(0,0,0,.25);transition:opacity .18s,transform .18s;z-index:50;font-size:13.5px}
 .toast.an{opacity:1;transform:translateX(-50%);pointer-events:auto}
 .toast button{border:0;background:none;color:#ffd27a;font-weight:600;padding:0}
+/* Bilder */
+.bilder{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.bilder img{height:64px;max-width:150px;object-fit:cover;border:1px solid var(--linie);border-radius:4px;cursor:zoom-in;background:#fff}
+.bilder img:hover{border-color:var(--blau)}
+.bildraster{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
+.bildraster figure{position:relative;margin:0;width:110px}
+.bildraster img{width:110px;height:76px;object-fit:cover;border:1px solid var(--linie);border-radius:4px;display:block;background:#fff;cursor:zoom-in}
+.bildraster figcaption{font-size:11px;color:var(--grau);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bildraster button{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(27,34,48,.75);color:#fff;font-size:13px;line-height:20px;padding:0}
+.bildraster button:hover{background:var(--ueber)}
+.bild-zeile{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:2px}
+.klein-hinweis{font-size:12px;color:var(--grau)}
+.word-wahl{display:flex;gap:10px;align-items:center;margin:0 0 10px}
+#lb{width:100vw;height:100vh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:rgba(12,18,32,.9);box-shadow:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;cursor:zoom-out}
+#lb[open]{display:flex}
+#lb::backdrop{background:transparent}
+#lb img{max-width:86vw;max-height:86vh;background:#fff;border-radius:4px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#lb .lbt{color:#dfe4ee;font-size:13px}
+#lb .lbn{position:absolute;top:50%;transform:translateY(-50%);border:0;background:rgba(255,255,255,.12);color:#fff;width:44px;height:64px;border-radius:6px;font-size:26px}
+#lb .lbn:hover{background:rgba(255,255,255,.25)}
+#lb .lbn.l{left:16px} #lb .lbn.r{right:16px}
 .ziehen{position:fixed;inset:0;background:rgba(29,60,135,.12);border:3px dashed var(--blau);display:none;z-index:60;
   align-items:center;justify-content:center;font-size:18px;color:var(--blau);font-weight:600}
 .ziehen.an{display:flex}
@@ -198,6 +219,8 @@ dialog::backdrop{background:rgba(15,25,55,.35)}
   .feld{background:transparent !important;box-shadow:none !important}
   .feld::placeholder{color:transparent}
   .eintrag{break-inside:avoid}
+  .bilder img{height:auto;max-height:55mm;max-width:85mm;object-fit:contain;cursor:default}
+  #lb{display:none !important}
   .eintrag:hover{background:none}
   .monat{break-after:avoid}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -292,6 +315,10 @@ dialog::backdrop{background:rgba(15,25,55,.35)}
       <div class="lkopf"><span>SAP-Link / Pfad</span><span>Anzeigetext</span><span></span></div>
       <div id="eLinks"></div>
       <button type="button" class="btn-plus" id="eLinkPlus">+ Weiterer Link</button>
+      <div class="lkopf" style="grid-template-columns:1fr;margin-top:12px"><span>Bilder und Screenshots</span></div>
+      <div id="eBilder" class="bildraster"></div>
+      <div class="bild-zeile"><button type="button" class="btn-plus" id="eBildPlus">+ Bild hinzufügen</button>
+        <span class="klein-hinweis" id="eBildInfo">oder Screenshot mit Strg+V einfügen bzw. Bild hierher ziehen</span></div>
       <div class="fehler" id="eFehler" role="alert"></div>
     </div>
     <div class="dfuss">
@@ -311,7 +338,9 @@ dialog::backdrop{background:rgba(15,25,55,.35)}
   <div style="width:620px">
     <div class="dk"><h2 id="iTitel">Aus Word übernehmen</h2></div>
     <div class="di">
-      <p class="hilfe">Im Word-Dokument <b>Strg+A</b> und <b>Strg+C</b> drücken, dann hier hineinklicken und <b>Strg+V</b>.
+      <div class="word-wahl"><button type="button" class="btn" id="iDatei">Word-Datei wählen …</button>
+        <span class="klein-hinweis">.docx oder .docm – oder die Datei hierher ziehen</span></div>
+      <p class="hilfe">Oder im Word-Dokument <b>Strg+A</b> und <b>Strg+C</b> drücken, dann hier hineinklicken und <b>Strg+V</b>.
       Kopfdaten kommen nur in leere Felder, doppelte Einträge werden übersprungen.</p>
       <div id="iFeld" class="einfuegen" contenteditable="true"></div>
       <p id="iVorschau" class="hilfe" style="margin-top:8px"></p>
@@ -325,8 +354,12 @@ dialog::backdrop{background:rgba(15,25,55,.35)}
 
 <input type="file" id="logoDatei" accept="image/*" hidden>
 <input type="file" id="listeDatei" accept=".html,.htm" hidden>
+<input type="file" id="wordDatei" accept=".docx,.docm,.doc" hidden>
+<input type="file" id="bildDatei" accept="image/*" multiple hidden>
+<dialog id="lb" aria-label="Bild"><img alt=""><span class="lbt"></span>
+  <button class="lbn l" aria-label="Vorheriges Bild">‹</button><button class="lbn r" aria-label="Nächstes Bild">›</button></dialog>
 <div class="toast" id="toast" role="status"><span id="toastText"></span><button id="toastKnopf" hidden></button></div>
-<div class="ziehen" id="ziehen">Logo (Bild) oder gespeicherte Liste (.html) hier ablegen</div>
+<div class="ziehen" id="ziehen">Ablegen: Bild auf einen Eintrag oder das Logo, Word-Datei (.docx) oder gespeicherte Liste (.html)</div>
 
 <script id="daten" type="application/json">{}</script>
 <script>
@@ -389,6 +422,7 @@ function normalisieren(d){
   d.eintraege.forEach((e,i) => {
     e.id = e.id || ('e'+Date.now().toString(36)+i);
     e.links = Array.isArray(e.links) ? e.links : [];
+    e.bilder = Array.isArray(e.bilder) ? e.bilder.filter(b => b && b.data) : [];
     e.kat = e.kat || ''; e.offen = !!e.offen; e.wv = e.wv || ''; e.erledigt_am = e.erledigt_am || '';
     e.text = e.text || ''; e.bearbeiter = e.bearbeiter || ''; e.datum = e.datum || '';
   });
@@ -495,7 +529,7 @@ function sichtbar(){
     if(F.offen && !e.offen) return false;
     if(F.kats.size && !F.kats.has(e.kat)) return false;
     if(q){
-      const hay = [e.datum, e.kat, e.text, e.bearbeiter, e.wv, ...e.links.map(l => l.text + ' ' + l.url)].join(' ').toLowerCase();
+      const hay = [e.datum, e.kat, e.text, e.bearbeiter, e.wv, ...e.links.map(l => l.text + ' ' + l.url), ...e.bilder.map(b => b.name)].join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
     }
     return true;
@@ -538,7 +572,9 @@ function zeileHtml(e, q){
     + '<div class="d zahl">'+markiere(e.datum,q)+'</div>'
     + '<div class="spur"><span class="p"></span></div>'
     + '<div class="inh">' + (zk ? '<div class="zk">'+zk+'</div>' : '') + '<div class="t">'+markiere(e.text,q)+'</div>'
-    + (links ? '<div class="links">'+links+'</div>' : '') + '</div>'
+    + (links ? '<div class="links">'+links+'</div>' : '')
+    + (e.bilder.length ? '<div class="bilder">' + e.bilder.map((b,i) => '<img src="'+esc(b.data)+'" alt="'+esc(b.name)+'" title="'+esc(b.name)+'" data-bild="'+i+'">').join('') + '</div>' : '')
+    + '</div>'
     + '<div class="b">'+markiere(e.bearbeiter,q)+'</div>'
     + '<div class="aktion">'
     + (e.offen ? '<button data-a="erledigt" title="Als erledigt markieren" aria-label="Erledigt">'+ico('haken')+'</button>' : '')
@@ -576,11 +612,13 @@ $('#zeilen').addEventListener('dblclick', ev => {
   const z = ev.target.closest('.eintrag'); if(z) oeffnen(finde(z.dataset.id));
 });
 $('#zeilen').addEventListener('click', ev => {
+  const img = ev.target.closest('img[data-bild]');
+  if(img){ const e = finde(img.closest('.eintrag').dataset.id); if(e) lbZeigen(e.bilder, +img.dataset.bild); return; }
   const b = ev.target.closest('button[data-a]'); if(!b) return;
   const e = finde(b.closest('.eintrag').dataset.id); if(!e) return;
   const a = b.dataset.a;
   if(a === 'bearbeiten') oeffnen(e);
-  else if(a === 'kopieren') oeffnen(Object.assign({}, e, {id:null, datum:heute(), erstellt:null, geaendert:null, erledigt_am:'', links:e.links.map(l => Object.assign({}, l))}), true);
+  else if(a === 'kopieren') oeffnen(Object.assign({}, e, {id:null, datum:heute(), erstellt:null, geaendert:null, erledigt_am:'', links:e.links.map(l => Object.assign({}, l)), bilder:e.bilder.slice()}), true);
   else if(a === 'erledigt'){
     e.offen = false; e.erledigt_am = heute(); e.geaendert = {von: aktBearbeiter(), am: jetztIso()};
     rendern(e.id); geaendert();
@@ -632,6 +670,7 @@ function oeffnen(e, kopie){
   $('#eWv').value = e ? (e.wv || '') : '';
   $('#eLinks').innerHTML = '';
   (e && e.links.length ? e.links : [null]).forEach(l => linkZeile(l));
+  dBilder = e ? e.bilder.slice() : []; bilderZeigen();
   $('#eFehler').textContent = '';
   let meta = '';
   if(aktuell && aktuell.erstellt) meta = 'Angelegt ' + isoText(aktuell.erstellt.am) + (aktuell.erstellt.von ? ' von ' + aktuell.erstellt.von : '');
@@ -655,7 +694,7 @@ $('#fEintrag').addEventListener('submit', ev => {
     .filter(l => l.url || l.text);
   const ziel = aktuell || {id: 'e' + Date.now().toString(36), erstellt: {von: bea, am: jetztIso()}};
   const warOffen = !!ziel.offen;
-  Object.assign(ziel, {datum, text, bearbeiter: bea, links, kat: $('#eKat').value, offen, wv});
+  Object.assign(ziel, {datum, text, bearbeiter: bea, links, kat: $('#eKat').value, offen, wv, bilder: dBilder.slice()});
   if(warOffen && !offen) ziel.erledigt_am = heute();
   if(offen) ziel.erledigt_am = '';
   if(aktuell) ziel.geaendert = {von: bea, am: jetztIso()};
@@ -744,6 +783,7 @@ function textKopieren(){
     if(e.bearbeiter) t += '  (' + e.bearbeiter + ')';
     if(e.offen) t += '\n            OFFEN' + (e.wv ? ' – Wiedervorlage ' + e.wv : '');
     e.links.forEach(l => { t += '\n            ' + (l.text && l.url ? l.text + ': ' + l.url : (l.text || l.url)); });
+    if(e.bilder.length) t += '\n            [' + e.bilder.length + (e.bilder.length === 1 ? ' Bild' : ' Bilder') + ' in der Liste]';
     t += '\n';
   }
   const fertig = () => toast(liste.length + (liste.length === 1 ? ' Eintrag' : ' Einträge') + ' als Text kopiert – in Mail oder Teams einfügen');
@@ -756,9 +796,9 @@ function textKopieren(){
 }
 async function csvSpeichern(){
   const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const zeilen = [['Datum','Art','Aktivität','Links','Bearbeiter','Offen','Wiedervorlage','Erledigt am'].map(q).join(';')];
+  const zeilen = [['Datum','Art','Aktivität','Links','Bearbeiter','Offen','Wiedervorlage','Erledigt am','Bilder'].map(q).join(';')];
   for(const e of sichtbar()) zeilen.push([e.datum, e.kat, e.text, e.links.map(l => (l.text ? l.text + ': ' : '') + l.url).join(' | '),
-    e.bearbeiter, e.offen ? 'ja' : '', e.wv, e.erledigt_am].map(q).join(';'));
+    e.bearbeiter, e.offen ? 'ja' : '', e.wv, e.erledigt_am, e.bilder.length || ''].map(q).join(';'));
   const name = dateiName().replace(/\.html$/, '') + '_' + sortKey(heute()) + '.csv';
   const h = await schreiben(String.fromCharCode(0xFEFF) + zeilen.join('\r\n'), name, true, {description:'CSV-Datei', accept:{'text/csv':['.csv']}});
   if(h) toast('CSV gespeichert: ' + h.name);
@@ -818,7 +858,7 @@ function wordAuswerten(html){
       links.push({url: u, text: t});
     });
     if(!links.length){ const t = zellText(tds[2]); if(t) t.split('\n').forEach(x => links.push({url:'', text:x})); }
-    eintraege.push({datum, text, links, bearbeiter: ws(tds[tds.length-1].textContent), kat:'', offen:false, wv:'', erledigt_am:''});
+    eintraege.push({datum, text, links, bearbeiter: ws(tds[tds.length-1].textContent), kat:'', offen:false, wv:'', erledigt_am:'', bilder:[]});
   });
   function wert(re){
     for(let i=0; i<zeilen.length; i++){
@@ -838,14 +878,17 @@ $('#iFeld').addEventListener('paste', ev => {
   const html = ev.clipboardData.getData('text/html');
   if(!html) return;
   ev.preventDefault();
-  $('#iFeld').innerHTML = '<i>Inhalt aus der Zwischenablage gelesen.</i>';
+  importZeigen(html, 'Inhalt aus der Zwischenablage gelesen.');
+});
+function importZeigen(html, quelle){
+  $('#iFeld').innerHTML = '<i>' + esc(quelle) + '</i>';
   importErgebnis = wordAuswerten(html);
   const k = importErgebnis.kopf, neu = importErgebnis.eintraege.filter(e => !D.eintraege.some(x => x.datum === e.datum && x.text === e.text));
   importErgebnis.neu = neu;
   $('#iVorschau').innerHTML = '<b>' + importErgebnis.eintraege.length + '</b> Einträge erkannt, davon <b>' + neu.length + '</b> neu.'
     + (k.ofnr || k.teilename ? '<br>Kopf: ' + esc([k.kunde, k.teilename, k.ofnr, k.anfrage].filter(Boolean).join(', ')) : '');
   $('#iOk').disabled = !(neu.length || k.ofnr || k.teilename);
-});
+}
 $('#iOk').addEventListener('click', () => {
   if(!importErgebnis) return;
   const k = importErgebnis.kopf;
@@ -882,16 +925,212 @@ document.addEventListener('dragover', ev => { if(hatDatei(ev)) ev.preventDefault
 document.addEventListener('drop', ev => {
   if(!hatDatei(ev)) return;
   ev.preventDefault(); ziehTiefe = 0; $('#ziehen').classList.remove('an');
-  const f = ev.dataTransfer.files[0]; if(!f) return;
-  if(/^image\//.test(f.type)) logoLaden(f);
-  else if(/\.html?$/i.test(f.name)) listeLaden(f);
-  else toast('Nur Bilder (Logo) oder gespeicherte Listen (.html) ablegen');
+  const dateien = [...ev.dataTransfer.files]; const f = dateien[0]; if(!f) return;
+  const bilder = dateien.filter(d => /^image\//.test(d.type));
+  if(dE.open){ if(bilder.length) bilderHinzu(bilder); else toast('Im Eintrag lassen sich nur Bilder ablegen'); return; }
+  if(/\.(docx|docm|doc)$/i.test(f.name)){ if(!dI.open) importOeffnen(); wordDateiLesen(f); return; }
+  if(dI.open){ toast('Hier nur Word-Dateien (.docx, .docm) ablegen'); return; }
+  if(bilder.length){
+    const z = ev.target.closest && ev.target.closest('.eintrag');
+    if(z){ const e = finde(z.dataset.id); if(e){ bilderVerkleinern(bilder).then(neu => { e.bilder.push(...neu); e.geaendert = {von: aktBearbeiter(), am: jetztIso()}; rendern(e.id); geaendert(); toast(neu.length + (neu.length === 1 ? ' Bild' : ' Bilder') + ' an den Eintrag vom ' + e.datum + ' angehängt'); }); } return; }
+    if(ev.target.closest && ev.target.closest('#logo')){ logoLaden(f); return; }
+    toast('Bild auf einen Eintrag ziehen (oder auf das Logo-Feld)'); return;
+  }
+  if(/\.html?$/i.test(f.name)) listeLaden(f);
+  else toast('Bilder, Word-Dateien (.docx) oder gespeicherte Listen (.html) ablegen');
 });
+
+/* ---------- Bilder ---------- */
+let dBilder = [];
+const groesseText = n => n > 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+function bilderZeigen(){
+  $('#eBilder').innerHTML = dBilder.map((b,i) => '<figure><img src="'+esc(b.data)+'" alt="'+esc(b.name)+'" data-i="'+i+'"><figcaption title="'+esc(b.name)+'">'+esc(b.name)+'</figcaption>'
+    + '<button type="button" data-weg="'+i+'" title="Bild entfernen" aria-label="Bild entfernen">×</button></figure>').join('');
+  const summe = dBilder.reduce((a,b) => a + b.data.length * 0.75, 0);
+  $('#eBildInfo').textContent = dBilder.length ? dBilder.length + (dBilder.length === 1 ? ' Bild' : ' Bilder') + ', ca. ' + groesseText(summe) + ' – weitere mit Strg+V oder Ziehen'
+    : 'oder Screenshot mit Strg+V einfügen bzw. Bild hierher ziehen';
+}
+$('#eBilder').addEventListener('click', ev => {
+  const w = ev.target.closest('button[data-weg]'); if(w){ dBilder.splice(+w.dataset.weg, 1); bilderZeigen(); return; }
+  const i = ev.target.closest('img[data-i]'); if(i) lbZeigen(dBilder, +i.dataset.i);
+});
+function bildVerkleinern(datei, nr){
+  return new Promise((ok, fehl) => {
+    const url = URL.createObjectURL(datei), img = new Image();
+    img.onload = () => {
+      const max = 1600, f = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * f); c.height = Math.round(img.naturalHeight * f);
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      let name = datei.name && !/^image\.(png|jpe?g)$/i.test(datei.name) ? datei.name : 'Screenshot ' + new Date().toLocaleString('de-DE', {dateStyle:'short', timeStyle:'short'}) + (nr ? ' (' + (nr + 1) + ')' : '');
+      ok({id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, data: c.toDataURL('image/jpeg', 0.88), b: c.width, h: c.height});
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); fehl(new Error('Bild nicht lesbar: ' + (datei.name || ''))); };
+    img.src = url;
+  });
+}
+async function bilderVerkleinern(dateien){
+  const neu = [];
+  for(let i = 0; i < dateien.length; i++){ try{ neu.push(await bildVerkleinern(dateien[i], dateien.length > 1 ? i : 0)); }catch(e){ toast(e.message); } }
+  return neu;
+}
+async function bilderHinzu(dateien){
+  const neu = await bilderVerkleinern(dateien);
+  dBilder.push(...neu); bilderZeigen();
+}
+$('#eBildPlus').addEventListener('click', () => $('#bildDatei').click());
+$('#bildDatei').addEventListener('change', ev => { const f = [...ev.target.files]; ev.target.value = ''; if(f.length) bilderHinzu(f); });
+dE.addEventListener('paste', ev => {
+  const b = [...(ev.clipboardData ? ev.clipboardData.files : [])].filter(d => /^image\//.test(d.type));
+  if(!b.length) return;
+  ev.preventDefault(); bilderHinzu(b);
+});
+
+/* Bild groß anzeigen */
+let lbListe = [], lbNr = 0;
+function lbZeigen(liste, nr){
+  lbListe = liste; lbNr = nr;
+  const b = liste[nr]; if(!b) return;
+  $('#lb img').src = b.data; $('#lb .lbt').textContent = b.name + (liste.length > 1 ? '  (' + (nr + 1) + ' von ' + liste.length + ')' : '');
+  $('#lb .l').hidden = $('#lb .r').hidden = liste.length < 2;
+  if(!$('#lb').open) $('#lb').showModal();
+}
+function lbZu(){ $('#lb').close(); }
+function lbWeiter(d){ if(lbListe.length > 1) lbZeigen(lbListe, (lbNr + d + lbListe.length) % lbListe.length); }
+$('#lb').addEventListener('click', ev => {
+  if(ev.target.closest('.l')){ ev.stopPropagation(); lbWeiter(-1); return; }
+  if(ev.target.closest('.r')){ ev.stopPropagation(); lbWeiter(1); return; }
+  lbZu();
+});
+$('#lb').addEventListener('keydown', ev => {
+  if(ev.key === 'ArrowLeft') lbWeiter(-1);
+  else if(ev.key === 'ArrowRight') lbWeiter(1);
+});
+
+/* ---------- Word-Datei (.docx/.docm) lesen ---------- */
+const NS_W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+async function zipLesen(puffer){
+  const dv = new DataView(puffer), u8 = new Uint8Array(puffer);
+  let eocd = -1;
+  for(let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+  if(eocd < 0) throw new Error('Die Datei ist keine .docx/.docm (kein ZIP-Archiv).');
+  const anzahl = dv.getUint16(eocd + 10, true); let off = dv.getUint32(eocd + 16, true);
+  const ein = {};
+  for(let k = 0; k < anzahl && dv.getUint32(off, true) === 0x02014b50; k++){
+    const meth = dv.getUint16(off + 10, true), gr = dv.getUint32(off + 20, true);
+    const nl = dv.getUint16(off + 28, true), el = dv.getUint16(off + 30, true), kl = dv.getUint16(off + 32, true), lo = dv.getUint32(off + 42, true);
+    ein[new TextDecoder().decode(u8.subarray(off + 46, off + 46 + nl))] = {meth, gr, lo};
+    off += 46 + nl + el + kl;
+  }
+  return {
+    namen: Object.keys(ein),
+    async text(name){
+      const e = ein[name]; if(!e) return null;
+      const start = e.lo + 30 + dv.getUint16(e.lo + 26, true) + dv.getUint16(e.lo + 28, true);
+      const daten = u8.subarray(start, start + e.gr);
+      let roh;
+      if(e.meth === 0) roh = daten;
+      else if(e.meth === 8) roh = new Uint8Array(await new Response(new Blob([daten]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+      else throw new Error('Unbekanntes Packverfahren in der Word-Datei');
+      return new TextDecoder('utf-8').decode(roh);
+    }
+  };
+}
+const escA = s => esc(s);
+function wAbsatz(p, rels){
+  let out = '', instr = '', phase = 0, offen = false;
+  const lauf = knoten => {
+    for(const c of knoten.childNodes){
+      if(c.nodeType !== 1) continue;
+      const n = c.localName;
+      if(n === 'hyperlink'){
+        const id = c.getAttributeNS(NS_R, 'id'), url = id ? rels[id] : '';
+        if(url) out += '<a href="' + escA(url) + '">'; lauf(c); if(url) out += '</a>';
+      } else if(n === 'fldChar'){
+        const t = c.getAttributeNS(NS_W, 'fldCharType');
+        if(t === 'begin'){ instr = ''; phase = 1; }
+        else if(t === 'separate'){ phase = 2; const m = /HYPERLINK\s+"([^"]+)"/.exec(instr); if(m){ out += '<a href="' + escA(m[1]) + '">'; offen = true; } }
+        else if(t === 'end'){ if(offen){ out += '</a>'; offen = false; } phase = 0; }
+      } else if(n === 'instrText'){ if(phase === 1) instr += c.textContent; }
+      else if(n === 't'){ if(phase !== 1) out += esc(c.textContent); }
+      else if(n === 'tab') out += ' ';
+      else if(n === 'br' || n === 'cr') out += '</p><p>';
+      else if(n === 'fldSimple'){
+        const m = /HYPERLINK\s+"([^"]+)"/.exec(c.getAttributeNS(NS_W, 'instr') || '');
+        if(m) out += '<a href="' + escA(m[1]) + '">'; lauf(c); if(m) out += '</a>';
+      } else if(['r','smartTag','ins','sdt','sdtContent','customXml'].includes(n)) lauf(c);
+    }
+  };
+  lauf(p);
+  if(offen) out += '</a>';
+  return '<p>' + out + '</p>';
+}
+function wBlock(knoten, rels){
+  let out = '';
+  for(const c of knoten.childNodes){
+    if(c.nodeType !== 1) continue;
+    if(c.localName === 'p') out += wAbsatz(c, rels);
+    else if(c.localName === 'tbl') out += wTabelle(c, rels);
+    else if(c.localName === 'sdt' || c.localName === 'sdtContent' || c.localName === 'customXml') out += wBlock(c, rels);
+  }
+  return out;
+}
+function wTabelle(tbl, rels){
+  let out = '<table>';
+  const zeilen = [];
+  const sammeln = k => { for(const c of k.childNodes){ if(c.nodeType !== 1) continue; if(c.localName === 'tr') zeilen.push(c); else if(['sdt','sdtContent','customXml'].includes(c.localName)) sammeln(c); } };
+  sammeln(tbl);
+  for(const tr of zeilen){
+    out += '<tr>';
+    const zellen = [];
+    const z = k => { for(const c of k.childNodes){ if(c.nodeType !== 1) continue; if(c.localName === 'tc') zellen.push(c); else if(['sdt','sdtContent','customXml'].includes(c.localName)) z(c); } };
+    z(tr);
+    for(const tc of zellen) out += '<td>' + wBlock(tc, rels) + '</td>';
+    out += '</tr>';
+  }
+  return out + '</table>';
+}
+async function docxNachHtml(datei){
+  const zip = await zipLesen(await datei.arrayBuffer());
+  const xml = t => new DOMParser().parseFromString(t, 'application/xml');
+  const teile = zip.namen.filter(n => /^word\/header\d*\.xml$/.test(n)).sort();
+  teile.push('word/document.xml');
+  let html = '<html><body>';
+  for(const teil of teile){
+    const t = await zip.text(teil); if(!t) continue;
+    const rels = {};
+    const rt = await zip.text(teil.replace(/^word\//, 'word/_rels/') + '.rels');
+    if(rt) for(const r of xml(rt).getElementsByTagName('Relationship')) rels[r.getAttribute('Id')] = r.getAttribute('Target');
+    const d = xml(t);
+    if(d.getElementsByTagName('parsererror').length) continue;
+    const body = d.getElementsByTagNameNS(NS_W, 'body')[0] || d.documentElement;
+    html += wBlock(body, rels);
+    /* zusätzlich alle Absätze (auch Textfelder) als Zeilen – für die Kopfdaten */
+    html += '<table>' + [...d.getElementsByTagNameNS(NS_W, 'p')].map(p => '<tr><td>' + wAbsatz(p, rels) + '</td></tr>').join('') + '</table>';
+  }
+  if(teile.length && !(await zip.text('word/document.xml'))) throw new Error('In der Datei fehlt der Word-Inhalt (word/document.xml).');
+  return html + '</body></html>';
+}
+async function wordDateiLesen(f){
+  if(/\.doc$/i.test(f.name)){
+    $('#iVorschau').innerHTML = '<b>' + esc(f.name) + '</b> ist im alten Word-Format (.doc), das der Browser nicht lesen kann. In Word öffnen und als .docx speichern – oder dort Strg+A, Strg+C und hier Strg+V.';
+    $('#iOk').disabled = true; return;
+  }
+  try{
+    $('#iVorschau').textContent = 'Lese ' + f.name + ' …';
+    importZeigen(await docxNachHtml(f), f.name + ' gelesen.');
+  }catch(e){
+    $('#iVorschau').textContent = f.name + ': ' + e.message; $('#iOk').disabled = true;
+  }
+}
+$('#iDatei').addEventListener('click', () => $('#wordDatei').click());
+$('#wordDatei').addEventListener('change', ev => { const f = ev.target.files[0]; ev.target.value = ''; if(f) wordDateiLesen(f); });
 
 /* ---------- Start ---------- */
 $('#ver').textContent = VERSION;
 sortieren(); kopfZeigen(); logoZeigen(); titel(); rendern(); status();
-window.__aktliste = {get daten(){ return D; }, wordAuswerten, dateiText};
+window.__aktliste = {get daten(){ return D; }, wordAuswerten, dateiText, docxNachHtml};
 })();
 </script>
 </body>
